@@ -9,7 +9,253 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          check_in_date: string
+          check_out_date: string
+          created_at: string
+          guest_count: number
+          hotel_id: string
+          id: string
+          room_id: string
+          special_requests: string | null
+          status: string
+          total_price: number
+          user_id: string
+        }
+        Insert: {
+          check_in_date: string
+          check_out_date: string
+          created_at?: string
+          guest_count: number
+          hotel_id: string
+          id?: string
+          room_id: string
+          special_requests?: string | null
+          status: string
+          total_price: number
+          user_id: string
+        }
+        Update: {
+          check_in_date?: string
+          check_out_date?: string
+          created_at?: string
+          guest_count?: number
+          hotel_id?: string
+          id?: string
+          room_id?: string
+          special_requests?: string | null
+          status?: string
+          total_price?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotels: {
+        Row: {
+          address: string
+          amenities: string[]
+          city: string
+          country: string
+          created_at: string
+          description: string
+          email: string
+          featured: boolean | null
+          featured_image: string
+          id: string
+          images: string[]
+          latitude: number
+          longitude: number
+          name: string
+          owner_id: string | null
+          phone_number: string
+          price_per_night: number
+          rating: number
+          review_count: number
+          website: string | null
+        }
+        Insert: {
+          address: string
+          amenities?: string[]
+          city: string
+          country: string
+          created_at?: string
+          description: string
+          email: string
+          featured?: boolean | null
+          featured_image: string
+          id?: string
+          images?: string[]
+          latitude: number
+          longitude: number
+          name: string
+          owner_id?: string | null
+          phone_number: string
+          price_per_night: number
+          rating?: number
+          review_count?: number
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          amenities?: string[]
+          city?: string
+          country?: string
+          created_at?: string
+          description?: string
+          email?: string
+          featured?: boolean | null
+          featured_image?: string
+          id?: string
+          images?: string[]
+          latitude?: number
+          longitude?: number
+          name?: string
+          owner_id?: string | null
+          phone_number?: string
+          price_per_night?: number
+          rating?: number
+          review_count?: number
+          website?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone_number: string | null
+          profile_picture: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone_number?: string | null
+          profile_picture?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone_number?: string | null
+          profile_picture?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string
+          date: string
+          hotel_id: string
+          id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          date?: string
+          hotel_id: string
+          id?: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          date?: string
+          hotel_id?: string
+          id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          amenities: string[]
+          available: boolean
+          bed_type: string
+          capacity: number
+          created_at: string
+          description: string
+          hotel_id: string
+          id: string
+          images: string[]
+          name: string
+          price: number
+          size: number
+        }
+        Insert: {
+          amenities?: string[]
+          available?: boolean
+          bed_type: string
+          capacity: number
+          created_at?: string
+          description: string
+          hotel_id: string
+          id?: string
+          images?: string[]
+          name: string
+          price: number
+          size: number
+        }
+        Update: {
+          amenities?: string[]
+          available?: boolean
+          bed_type?: string
+          capacity?: number
+          created_at?: string
+          description?: string
+          hotel_id?: string
+          id?: string
+          images?: string[]
+          name?: string
+          price?: number
+          size?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +264,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "guest" | "owner" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +379,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["guest", "owner", "admin"],
+    },
   },
 } as const
