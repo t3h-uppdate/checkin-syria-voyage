@@ -2,13 +2,40 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { HOTELS } from '@/data/mockData';
+import { useHotels } from '@/hooks/useHotels';
+import { Loader2 } from 'lucide-react';
 
 const FeaturedHotelsSection = () => {
   const { t } = useTranslation();
+  const { data: hotels, isLoading, error } = useHotels({ featured: true });
   
-  // Get only featured hotels
-  const featuredHotels = HOTELS.filter(hotel => hotel.featured);
+  if (isLoading) {
+    return (
+      <div className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-red-500">
+            Det gick inte att ladda hotellen. Försök igen senare.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hotels?.length) {
+    return null;
+  }
 
   return (
     <section className="py-20">
@@ -21,7 +48,7 @@ const FeaturedHotelsSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredHotels.map((hotel, index) => (
+          {hotels.map((hotel, index) => (
             <motion.div
               key={hotel.id}
               initial={{ opacity: 0, y: 20 }}
@@ -33,12 +60,12 @@ const FeaturedHotelsSection = () => {
               <Link to={`/hotels/${hotel.id}`}>
                 <div className="relative h-64">
                   <img 
-                    src={hotel.featuredImage} 
+                    src={hotel.featured_image} 
                     alt={hotel.name} 
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-4 right-4 bg-primary text-white text-sm font-bold rounded-full py-1 px-3">
-                    ${hotel.pricePerNight} <span className="text-xs font-normal">{t('hotel.perNight')}</span>
+                    {hotel.price_per_night} kr <span className="text-xs font-normal">{t('hotel.perNight')}</span>
                   </div>
                 </div>
                 <div className="p-6">

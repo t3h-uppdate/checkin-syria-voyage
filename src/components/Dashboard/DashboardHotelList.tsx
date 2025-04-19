@@ -1,31 +1,32 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, PlusCircle, Trash2, BarChart } from 'lucide-react';
+import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
-type Hotel = {
-  id: string;
-  name: string;
-  description: string;
-  city: string;
-  country: string;
-  rating: number;
-  price_per_night: number;
-  featured_image: string;
-};
+const DashboardHotelList = () => {
+  const { user } = useAuth();
+  
+  const { data: hotels, isLoading, error, refetch } = useQuery({
+    queryKey: ['owner-hotels', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hotels')
+        .select('*')
+        .eq('owner_id', user?.id);
 
-interface DashboardHotelListProps {
-  hotels: Hotel[];
-}
-
-const DashboardHotelList = ({ hotels }: DashboardHotelListProps) => {
-  const [localHotels, setLocalHotels] = useState<Hotel[]>(hotels);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const handleDeleteHotel = async (hotelId: string) => {
     try {
@@ -36,13 +37,49 @@ const DashboardHotelList = ({ hotels }: DashboardHotelListProps) => {
 
       if (error) throw error;
 
-      setLocalHotels(localHotels.filter(hotel => hotel.id !== hotelId));
+      refetch();
       toast.success('Hotellet har tagits bort');
     } catch (error) {
       console.error('Error deleting hotel:', error);
       toast.error('Kunde inte ta bort hotellet');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 py-8">
+        Ett fel uppstod när hotellen skulle hämtas. Försök igen senare.
+      </div>
+    );
+  }
+
+  if (!hotels?.length) {
+    return (
+      <div className="text-center py-16 px-4 bg-muted/50 rounded-lg border-2 border-dashed border-muted">
+        <div className="mx-auto w-16 h-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
+          <Hotel className="h-8 w-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-medium mb-2">Välkommen till din hotellportal</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          Börja genom att lägga till ditt första hotell. Här kan du hantera alla dina hotell, bokningar och gästinformation på ett enkelt sätt.
+        </p>
+        <Button asChild size="lg" className="gap-2">
+          <Link to="/dashboard/hotels/new">
+            <PlusCircle className="h-5 w-5" />
+            <span>Lägg till ditt första hotell</span>
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -60,7 +97,7 @@ const DashboardHotelList = ({ hotels }: DashboardHotelListProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {localHotels.map((hotel) => (
+        {hotels.map((hotel) => (
           <Card key={hotel.id} className="overflow-hidden">
             <div className="h-48 overflow-hidden">
               <img 
