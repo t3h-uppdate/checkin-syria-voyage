@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, PlusCircle, Trash2 } from 'lucide-react';
+import { Edit, Eye, PlusCircle, Trash2, BarChart } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/sonner';
@@ -36,7 +36,6 @@ const DashboardHotelList = ({ hotels }: DashboardHotelListProps) => {
 
       if (error) throw error;
 
-      // Update local state
       setLocalHotels(localHotels.filter(hotel => hotel.id !== hotelId));
       toast.success('Hotellet har tagits bort');
     } catch (error) {
@@ -48,7 +47,10 @@ const DashboardHotelList = ({ hotels }: DashboardHotelListProps) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Dina Hotell</h2>
+        <div>
+          <h2 className="text-2xl font-semibold">Dina Hotell</h2>
+          <p className="text-muted-foreground">Hantera alla dina hotell från en plats</p>
+        </div>
         <Button asChild>
           <Link to="/dashboard/hotels/new" className="flex items-center gap-2">
             <PlusCircle className="h-4 w-4" />
@@ -68,44 +70,40 @@ const DashboardHotelList = ({ hotels }: DashboardHotelListProps) => {
               />
             </div>
             <CardHeader>
-              <CardTitle>{hotel.name}</CardTitle>
-              <CardDescription>{hotel.city}, {hotel.country}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500 line-clamp-2">{hotel.description}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-yellow-500 mr-1">★</span>
-                  <span>{hotel.rating.toFixed(1)}</span>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{hotel.name}</CardTitle>
+                  <CardDescription>{hotel.city}, {hotel.country}</CardDescription>
                 </div>
-                <div className="font-medium">
-                  {hotel.price_per_night} SEK / natt
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center text-yellow-500">
+                    <span>★</span>
+                    <span className="ml-1 text-sm">{hotel.rating.toFixed(1)}</span>
+                  </div>
+                  <div className="text-sm font-medium">
+                    {hotel.price_per_night} kr
+                  </div>
                 </div>
               </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground line-clamp-2">{hotel.description}</p>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`/dashboard/hotels/${hotel.id}/edit`} className="flex items-center gap-1">
                     <Edit className="h-4 w-4" />
                     <span>Redigera</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Redigera hotell</DialogTitle>
-                    <DialogDescription>
-                      Redigera information för {hotel.name}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <p>Redigeringsfunktionen är under utveckling</p>
-                  </div>
-                  <DialogFooter>
-                    <Button type="button">Spara ändringar</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`/dashboard/hotels/${hotel.id}/stats`} className="flex items-center gap-1">
+                    <BarChart className="h-4 w-4" />
+                    <span>Statistik</span>
+                  </Link>
+                </Button>
+              </div>
 
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" asChild>
