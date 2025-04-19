@@ -13,31 +13,34 @@ import BookingConfirmationPage from "./pages/BookingConfirmationPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotFound from "./pages/NotFound";
-import './i18n';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/hotels" element={<HotelsPage />} />
-            <Route path="/hotels/:id" element={<HotelDetailsPage />} />
-            <Route path="/booking/:hotelId/:roomId" element={<BookingPage />} />
-            <Route path="/confirmation/:bookingId" element={<BookingConfirmationPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <I18nextProvider i18n={i18n}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/hotels" element={<HotelsPage />} />
+              <Route path="/hotels/:id" element={<HotelDetailsPage />} />
+              <Route path="/booking/:hotelId/:roomId" element={<BookingPage />} />
+              <Route path="/confirmation/:bookingId" element={<BookingConfirmationPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </I18nextProvider>
 );
 
 export default App;
