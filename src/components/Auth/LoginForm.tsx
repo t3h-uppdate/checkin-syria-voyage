@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -31,6 +32,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { signIn } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -46,20 +48,11 @@ const LoginForm = () => {
     setError(null);
     
     try {
-      // This would be an API call to login in a real app
-      console.log('Login data:', data);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real application, this would store the JWT token
-      localStorage.setItem('isLoggedIn', 'true');
-      
-      // Redirect to home page
-      navigate('/');
+      await signIn(data.email, data.password);
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      setError('Invalid email or password. Please try again.');
+      setError('Ogiltig e-post eller lösenord. Försök igen.');
     } finally {
       setIsSubmitting(false);
     }
@@ -74,7 +67,7 @@ const LoginForm = () => {
     >
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold">{t('auth.login')}</h1>
-        <p className="text-gray-600 mt-2">Welcome back! Please sign in to your account.</p>
+        <p className="text-gray-600 mt-2">Välkommen tillbaka! Logga in på ditt konto.</p>
       </div>
       
       {error && (
@@ -143,7 +136,7 @@ const LoginForm = () => {
             className="w-full" 
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Signing in...' : t('auth.signIn')}
+            {isSubmitting ? 'Loggar in...' : t('auth.signIn')}
           </Button>
         </form>
       </Form>

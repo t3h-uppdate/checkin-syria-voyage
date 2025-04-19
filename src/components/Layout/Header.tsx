@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Menu, Search, User, ChevronDown } from 'lucide-react';
+import { Menu, Search, User, ChevronDown, LogOut, Hotel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,12 +11,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   // Change header on scroll
   useEffect(() => {
@@ -37,6 +40,15 @@ const Header = () => {
     i18n.changeLanguage(newLang);
     document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
     localStorage.setItem('language', newLang);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   // Set initial direction based on language
@@ -91,14 +103,44 @@ const Header = () => {
             >
               {t('common.hotels')}
             </Link>
-            <Link 
-              to="/login" 
-              className={`transition-colors duration-300 hover:text-primary ${
-                isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
-              }`}
-            >
-              {t('common.login')}
-            </Link>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className={`flex items-center gap-2 ${
+                      isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                    }`}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Mitt Konto</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center gap-2">
+                      <Hotel className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
+                    <LogOut className="h-4 w-4" />
+                    <span>Logga ut</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link 
+                to="/login" 
+                className={`transition-colors duration-300 hover:text-primary ${
+                  isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                }`}
+              >
+                {t('common.login')}
+              </Link>
+            )}
             
             {/* Language Toggle */}
             <Button
@@ -149,13 +191,39 @@ const Header = () => {
               >
                 {t('common.hotels')}
               </Link>
-              <Link 
-                to="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-gray-700 hover:text-primary"
-              >
-                {t('common.login')}
-              </Link>
+              
+              {user ? (
+                <>
+                  <Link 
+                    to="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary flex items-center gap-2"
+                  >
+                    <Hotel className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-red-500 hover:text-red-700 justify-start flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logga ut</span>
+                  </Button>
+                </>
+              ) : (
+                <Link 
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-gray-700 hover:text-primary"
+                >
+                  {t('common.login')}
+                </Link>
+              )}
+              
               <Button
                 variant="ghost"
                 size="sm"
