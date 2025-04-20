@@ -258,7 +258,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      booking_details_view: {
+        Row: {
+          booking_created_at: string | null
+          booking_id: string | null
+          booking_status: string | null
+          check_in_date: string | null
+          check_out_date: string | null
+          guest_count: number | null
+          guest_first_name: string | null
+          guest_last_name: string | null
+          hotel_id: string | null
+          hotel_name: string | null
+          owner_id: string | null
+          room_id: string | null
+          room_name: string | null
+          special_requests: string | null
+          total_price: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

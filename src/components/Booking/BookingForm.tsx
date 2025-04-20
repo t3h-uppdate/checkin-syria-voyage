@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { supabase } from '@/integrations/supabase/client'; // Import supabase
+import { useToast } from '@/components/ui/use-toast'; // Import useToast for error messages
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,6 +47,8 @@ type FormValues = z.infer<typeof formSchema>;
 const BookingForm = ({ hotel, room, checkIn, checkOut }: BookingFormProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get user from context
+  const { toast } = useToast(); // Initialize toast
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
@@ -71,45 +76,70 @@ const BookingForm = ({ hotel, room, checkIn, checkOut }: BookingFormProps) => {
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    
+
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to make a booking.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return; // Stop submission if user is not logged in
+    }
+
+    const bookingData = {
+      user_id: user.id,
+      hotel_id: hotel.id,
+      room_id: room.id,
+      check_in_date: checkIn.toISOString(),
+      check_out_date: checkOut.toISOString(),
+      guest_count: room.capacity, // Using room capacity as guest count
+      total_price: total,
+      status: 'pending', // Initial status
+      special_requests: data.specialRequests || null, // Use null if empty
+    };
+
     try {
-      // This would be an API call to create a booking in a real app
-      console.log('Booking data:', {
-        ...data,
-        hotelId: hotel.id,
-        roomId: room.id,
-        checkIn,
-        checkOut,
-        nights,
-        total,
-      });
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Generate a fake booking ID
-      const bookingId = `BK${Math.floor(Math.random() * 100000)}`;
-      
-      // Navigate to confirmation page
-      navigate(`/confirmation/${bookingId}`, { 
-        state: { 
-          booking: {
-            id: bookingId,
-            hotelName: hotel.name,
-            roomName: room.name,
-            checkIn,
-            checkOut,
-            nights,
-            guestName: `${data.firstName} ${data.lastName}`,
-            email: data.email,
-            phone: data.phone,
-            specialRequests: data.specialRequests,
-            total,
+      const { data: newBooking, error } = await supabase
+        .from('bookings')
+        .insert([bookingData])
+        .select() // Select the newly inserted row
+        .single(); // Expecting a single row back
+
+      if (error) {
+        throw error; // Throw error to be caught below
+      }
+
+      if (!newBooking) {
+        throw new Error("Booking creation failed, no data returned.");
+      }
+
+      // Navigate to confirmation page with the actual booking ID
+      navigate(`/confirmation/${newBooking.id}`, {
+        state: {
+          booking: { // Pass necessary details to confirmation page
+            id: newBooking.id,
+            hotelName: hotel.name, // Use hotel name from prop
+            roomName: room.name,   // Use room name from prop
+            checkIn: new Date(newBooking.check_in_date), // Use actual check-in from DB
+            checkOut: new Date(newBooking.check_out_date), // Use actual check-out from DB
+            nights: nights, // Use calculated nights
+            guestName: `${data.firstName} ${data.lastName}`, // Use name from form
+            email: data.email, // Use email from form
+            phone: data.phone, // Use phone from form
+            specialRequests: newBooking.special_requests, // Use requests from DB
+            total: newBooking.total_price, // Use total from DB
           }
-        } 
+        }
       });
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('Error creating booking:', error);
+      toast({
+        title: "Booking Failed",
+        description: error.message || "Could not save your booking. Please try again.",
+        variant: "destructive",
+      });
       setIsSubmitting(false);
     }
   };

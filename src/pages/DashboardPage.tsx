@@ -8,6 +8,7 @@ import DashboardHotelList from '@/components/Dashboard/DashboardHotelList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Hotel, Calendar, Bed } from 'lucide-react'; // Added Bed icon
 import RoomManagement from '@/components/Dashboard/RoomManagement'; // Import RoomManagement
+import BookingRequestsList from '@/components/Dashboard/BookingRequestsList'; // Import BookingRequestsList
 import { Hotel as HotelType } from '@/types'; // Import Hotel type
 
 const DashboardPage = () => {
@@ -75,11 +76,8 @@ const DashboardPage = () => {
             </TabsContent>
 
             <TabsContent value="bookings">
-              <div className="p-8 bg-muted rounded-lg text-center">
-                <Calendar className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">Bokningshantering</h3>
-                <p className="text-muted-foreground">Här kommer du kunna hantera alla bokningar för dina hotell.</p>
-              </div>
+              {/* Replace placeholder with the actual component */}
+              <BookingRequestsList />
             </TabsContent>
 
             <TabsContent value="rooms">
