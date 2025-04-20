@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -29,24 +28,25 @@ const HotelsPage = () => {
   // Get hotels from Supabase
   const { data: hotels, isLoading, error } = useHotels();
   
-  // Parse search params
-  const destination = searchParams.get('destination');
-  const checkIn = searchParams.get('checkIn') ? new Date(searchParams.get('checkIn')!) : undefined;
-  const checkOut = searchParams.get('checkOut') ? new Date(searchParams.get('checkOut')!) : undefined;
-  const guests = searchParams.get('guests') ? parseInt(searchParams.get('guests')!) : undefined;
-  const priceMin = searchParams.get('priceMin') ? parseInt(searchParams.get('priceMin')!) : undefined;
-  const priceMax = searchParams.get('priceMax') ? parseInt(searchParams.get('priceMax')!) : undefined;
-  const amenitiesParam = searchParams.get('amenities');
-  const amenities = amenitiesParam ? amenitiesParam.split(',') : [];
-  const ratingParam = searchParams.get('rating');
-  const rating = ratingParam ? parseInt(ratingParam) : undefined;
+  // Parse search params once
+  const searchParamsObj = {
+    destination: searchParams.get('destination')?.toLowerCase() || '',
+    checkIn: searchParams.get('checkIn') ? new Date(searchParams.get('checkIn')!) : undefined,
+    checkOut: searchParams.get('checkOut') ? new Date(searchParams.get('checkOut')!) : undefined,
+    guests: searchParams.get('guests') ? parseInt(searchParams.get('guests')!) : undefined,
+    priceMin: searchParams.get('priceMin') ? parseInt(searchParams.get('priceMin')!) : undefined,
+    priceMax: searchParams.get('priceMax') ? parseInt(searchParams.get('priceMax')!) : undefined,
+    amenities: searchParams.get('amenities')?.split(',') || [],
+    rating: searchParams.get('rating') ? parseInt(searchParams.get('rating')!) : undefined,
+  };
 
   // Filter hotels based on search params
   useEffect(() => {
-    // Only scroll to top when filters change, not during initial load
-    if (searchParams.toString()) {
-      window.scrollTo(0, 0);
+    // Only scroll to top when filters change and not during initial load
+    if (searchParams.toString() && document.referrer !== window.location.href) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    
     setCurrentPage(1);
     
     if (!hotels) {
@@ -57,38 +57,37 @@ const HotelsPage = () => {
     let filtered = [...hotels];
     
     // Filter by destination (city or country)
-    if (destination) {
-      const searchTerm = destination.toLowerCase();
+    if (searchParamsObj.destination) {
       filtered = filtered.filter(hotel => 
-        hotel.city.toLowerCase().includes(searchTerm) || 
-        hotel.country.toLowerCase().includes(searchTerm) || 
-        hotel.name.toLowerCase().includes(searchTerm)
+        hotel.city.toLowerCase().includes(searchParamsObj.destination) || 
+        hotel.country.toLowerCase().includes(searchParamsObj.destination) || 
+        hotel.name.toLowerCase().includes(searchParamsObj.destination)
       );
     }
     
     // Filter by price
-    if (priceMin !== undefined) {
-      filtered = filtered.filter(hotel => hotel.pricePerNight >= priceMin);
+    if (searchParamsObj.priceMin !== undefined) {
+      filtered = filtered.filter(hotel => hotel.pricePerNight >= searchParamsObj.priceMin!);
     }
     
-    if (priceMax !== undefined) {
-      filtered = filtered.filter(hotel => hotel.pricePerNight <= priceMax);
+    if (searchParamsObj.priceMax !== undefined) {
+      filtered = filtered.filter(hotel => hotel.pricePerNight <= searchParamsObj.priceMax!);
     }
     
     // Filter by amenities
-    if (amenities.length > 0) {
+    if (searchParamsObj.amenities.length > 0) {
       filtered = filtered.filter(hotel => 
-        amenities.every(amenity => hotel.amenities.includes(amenity))
+        searchParamsObj.amenities.every(amenity => hotel.amenities.includes(amenity))
       );
     }
     
     // Filter by rating
-    if (rating !== undefined) {
-      filtered = filtered.filter(hotel => hotel.rating >= rating);
+    if (searchParamsObj.rating !== undefined) {
+      filtered = filtered.filter(hotel => hotel.rating >= searchParamsObj.rating!);
     }
     
     setFilteredHotels(filtered);
-  }, [hotels, destination, checkIn, checkOut, guests, priceMin, priceMax, amenities, rating, searchParams]);
+  }, [hotels, searchParams]);
 
   // Pagination logic
   const indexOfLastHotel = currentPage * hotelsPerPage;
@@ -103,10 +102,17 @@ const HotelsPage = () => {
   // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of results when changing pages
+    // Smooth scroll to results with offset for header
     const resultsElement = document.getElementById('hotel-results');
     if (resultsElement) {
-      resultsElement.scrollIntoView({ behavior: 'smooth' });
+      const headerOffset = 96; // Height of the fixed header
+      const elementPosition = resultsElement.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
 
