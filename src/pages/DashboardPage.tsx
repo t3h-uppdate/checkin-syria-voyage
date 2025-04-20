@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,15 +7,10 @@ import DashboardHotelList from '@/components/Dashboard/DashboardHotelList';
 import DashboardEmpty from '@/components/Dashboard/DashboardEmpty';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Hotel, Calendar } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/sonner';
 
 const DashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [hotels, setHotels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -23,37 +18,16 @@ const DashboardPage = () => {
       return;
     }
 
-    const fetchHotels = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const { data, error } = await supabase
-          .from('hotels')
-          .select('*')
-          .eq('owner_id', user.id);
-
-        if (error) throw error;
-        setHotels(data || []);
-      } catch (error) {
-        console.error('Error fetching hotels:', error);
-        setError('Kunde inte hämta hotellen. Försök igen senare.');
-        toast.error('Kunde inte hämta hotellen');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHotels();
     window.scrollTo(0, 0);
   }, [user, navigate]);
 
-  if (error) {
+  if (!user) {
     return (
       <MainLayout>
         <div className="pt-24 pb-12 min-h-[80vh]">
           <div className="container mx-auto px-4">
-            <div className="text-center py-16">
-              <p className="text-red-500">{error}</p>
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           </div>
         </div>
@@ -83,18 +57,7 @@ const DashboardPage = () => {
             </TabsList>
             
             <TabsContent value="hotels">
-              {loading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                    <p className="text-muted-foreground">Laddar dina hotell...</p>
-                  </div>
-                </div>
-              ) : hotels.length > 0 ? (
-                <DashboardHotelList hotels={hotels} />
-              ) : (
-                <DashboardEmpty />
-              )}
+              <DashboardHotelList />
             </TabsContent>
             
             <TabsContent value="bookings">

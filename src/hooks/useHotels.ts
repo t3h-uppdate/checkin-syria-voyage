@@ -19,7 +19,28 @@ export const useHotels = (options?: { featured?: boolean }) => {
         throw error;
       }
       
-      return data as Hotel[];
+      // Map the snake_case database fields to camelCase for our TypeScript types
+      return (data || []).map(hotel => ({
+        id: hotel.id,
+        name: hotel.name,
+        description: hotel.description,
+        address: hotel.address,
+        city: hotel.city,
+        country: hotel.country,
+        phoneNumber: hotel.phone_number,
+        email: hotel.email,
+        website: hotel.website,
+        images: hotel.images,
+        rating: hotel.rating,
+        reviewCount: hotel.review_count,
+        amenities: hotel.amenities,
+        latitude: hotel.latitude,
+        longitude: hotel.longitude,
+        featuredImage: hotel.featured_image,
+        pricePerNight: hotel.price_per_night,
+        featured: hotel.featured,
+        ownerId: hotel.owner_id
+      })) as Hotel[];
     },
   });
 };

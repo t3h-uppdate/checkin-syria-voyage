@@ -1,11 +1,9 @@
 
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,7 +63,7 @@ const DashboardHotelList = () => {
     return (
       <div className="text-center py-16 px-4 bg-muted/50 rounded-lg border-2 border-dashed border-muted">
         <div className="mx-auto w-16 h-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
-          <Hotel className="h-8 w-8 text-primary" />
+          <HotelIcon className="h-8 w-8 text-primary" />
         </div>
         <h3 className="text-xl font-medium mb-2">Välkommen till din hotellportal</h3>
         <p className="text-muted-foreground mb-6 max-w-md mx-auto">

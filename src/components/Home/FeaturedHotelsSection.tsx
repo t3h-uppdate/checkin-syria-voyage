@@ -60,12 +60,12 @@ const FeaturedHotelsSection = () => {
               <Link to={`/hotels/${hotel.id}`}>
                 <div className="relative h-64">
                   <img 
-                    src={hotel.featured_image} 
+                    src={hotel.featuredImage} 
                     alt={hotel.name} 
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-4 right-4 bg-primary text-white text-sm font-bold rounded-full py-1 px-3">
-                    {hotel.price_per_night} kr <span className="text-xs font-normal">{t('hotel.perNight')}</span>
+                    {hotel.pricePerNight} kr <span className="text-xs font-normal">{t('hotel.perNight')}</span>
                   </div>
                 </div>
                 <div className="p-6">
