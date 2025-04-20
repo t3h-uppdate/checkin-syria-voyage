@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,8 @@ const HotelDetailsPage = () => {
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [rooms, setRooms] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
   const [guests, setGuests] = useState<string>('2');
@@ -161,6 +164,18 @@ const HotelDetailsPage = () => {
         <div className="container mx-auto px-4 pt-24 pb-12">
           <div className="text-center py-12">
             <p className="text-xl">{t('common.loading')}</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 pt-24 pb-12">
+          <div className="text-center py-12 text-red-500">
+            <p className="text-xl">{error}</p>
           </div>
         </div>
       </MainLayout>
