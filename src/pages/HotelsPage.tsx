@@ -5,13 +5,30 @@ import { useTranslation } from 'react-i18next';
 import MainLayout from '@/components/Layout/MainLayout';
 import SearchFilters from '@/components/Hotels/SearchFilters';
 import HotelCard from '@/components/Hotels/HotelCard';
-import { HOTELS } from '@/data/mockData';
+import { useHotels } from '@/hooks/useHotels';
 import { Hotel } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Loader2, Filter } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const HotelsPage = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [filteredHotels, setFilteredHotels] = useState<Hotel[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isFilterVisible, setIsFilterVisible] = useState(true);
+  const hotelsPerPage = 5;
+  
+  // Get hotels from Supabase
+  const { data: hotels, isLoading, error } = useHotels();
   
   // Parse search params
   const destination = searchParams.get('destination');
@@ -29,8 +46,14 @@ const HotelsPage = () => {
   useEffect(() => {
     // Scroll to top on filter change
     window.scrollTo(0, 0);
+    setCurrentPage(1);
     
-    let filtered = [...HOTELS];
+    if (!hotels) {
+      setFilteredHotels([]);
+      return;
+    }
+    
+    let filtered = [...hotels];
     
     // Filter by destination (city or country)
     if (destination) {
@@ -66,54 +89,124 @@ const HotelsPage = () => {
     // TODO: In a real app, we would also filter by availability based on checkIn, checkOut, and guests
     
     setFilteredHotels(filtered);
-  }, [destination, checkIn, checkOut, guests, priceMin, priceMax, amenities, rating]);
+  }, [hotels, destination, checkIn, checkOut, guests, priceMin, priceMax, amenities, rating]);
+
+  // Pagination logic
+  const indexOfLastHotel = currentPage * hotelsPerPage;
+  const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
+  const currentHotels = filteredHotels.slice(indexOfFirstHotel, indexOfLastHotel);
+  const totalPages = Math.ceil(filteredHotels.length / hotelsPerPage);
+
+  const toggleFilters = () => {
+    setIsFilterVisible(!isFilterVisible);
+  };
 
   return (
     <MainLayout>
-      <div className="pt-24 pb-12 bg-muted">
+      <div className="pt-24 pb-12 min-h-screen">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-6">{t('common.hotels')}</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">{t('common.hotels')}</h1>
+            <Button 
+              variant="outline" 
+              className="lg:hidden flex items-center gap-2"
+              onClick={toggleFilters}
+            >
+              <Filter className="h-4 w-4" />
+              {isFilterVisible ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+          </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Filters Sidebar */}
-            <div className="lg:col-span-1">
+            <div className={`lg:col-span-1 lg:block ${isFilterVisible ? 'block' : 'hidden'}`}>
               <SearchFilters />
             </div>
             
             {/* Hotel Listings */}
             <div className="lg:col-span-3">
-              {/* Results count */}
-              <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-bold">
-                    {filteredHotels.length} {filteredHotels.length === 1 ? 'Hotel' : 'Hotels'} {destination ? `in "${destination}"` : ''}
-                  </h2>
-                  {/* TODO: Add sort functionality */}
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">{t('search.sortBy')}:</span>
-                    <select className="border rounded-md text-sm p-1">
-                      <option value="recommended">Recommended</option>
-                      <option value="price-low">Price (Low to High)</option>
-                      <option value="price-high">Price (High to Low)</option>
-                      <option value="rating">Rating</option>
-                    </select>
-                  </div>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              </div>
-              
-              {/* Hotel Cards */}
-              <div className="space-y-6">
-                {filteredHotels.length > 0 ? (
-                  filteredHotels.map((hotel, index) => (
-                    <HotelCard key={hotel.id} hotel={hotel} index={index} />
-                  ))
-                ) : (
-                  <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                    <h3 className="text-xl font-bold mb-2">{t('search.noResults')}</h3>
-                    <p className="text-gray-600 mb-4">No hotels match your current filters. Try adjusting your search criteria.</p>
+              ) : error ? (
+                <div className="bg-white rounded-lg shadow-md p-12 text-center">
+                  <h3 className="text-xl font-bold mb-2">Error</h3>
+                  <p className="text-gray-600 mb-4">Failed to load hotels. Please try again later.</p>
+                </div>
+              ) : (
+                <>
+                  {/* Results count */}
+                  <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-xl font-bold">
+                        {filteredHotels.length} {filteredHotels.length === 1 ? 'Hotel' : 'Hotels'} {destination ? `in "${destination}"` : ''}
+                      </h2>
+                      {/* TODO: Add sort functionality */}
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600 hidden sm:inline">{t('search.sortBy')}:</span>
+                        <select className="border rounded-md text-sm p-1">
+                          <option value="recommended">Recommended</option>
+                          <option value="price-low">Price (Low to High)</option>
+                          <option value="price-high">Price (High to Low)</option>
+                          <option value="rating">Rating</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
+                  
+                  {/* Hotel Cards */}
+                  <div className="space-y-6">
+                    {currentHotels.length > 0 ? (
+                      <>
+                        {currentHotels.map((hotel, index) => (
+                          <HotelCard key={hotel.id} hotel={hotel} index={index} />
+                        ))}
+                        
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                          <Pagination className="mt-8">
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious 
+                                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""} 
+                                />
+                              </PaginationItem>
+                              
+                              {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                                const pageNum = i + 1;
+                                return (
+                                  <PaginationItem key={i}>
+                                    <PaginationLink 
+                                      isActive={currentPage === pageNum}
+                                      onClick={() => setCurrentPage(pageNum)}
+                                    >
+                                      {pageNum}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                );
+                              })}
+                              
+                              <PaginationItem>
+                                <PaginationNext 
+                                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""} 
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
+                        )}
+                      </>
+                    ) : (
+                      <div className="bg-white rounded-lg shadow-md p-12 text-center">
+                        <h3 className="text-xl font-bold mb-2">{t('search.noResults')}</h3>
+                        <p className="text-gray-600 mb-4">No hotels match your current filters. Try adjusting your search criteria.</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
