@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +43,10 @@ const HotelsPage = () => {
 
   // Filter hotels based on search params
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Only scroll to top when filters change, not during initial load
+    if (searchParams.toString()) {
+      window.scrollTo(0, 0);
+    }
     setCurrentPage(1);
     
     if (!hotels) {
@@ -84,7 +88,7 @@ const HotelsPage = () => {
     }
     
     setFilteredHotels(filtered);
-  }, [hotels, destination, checkIn, checkOut, guests, priceMin, priceMax, amenities, rating]);
+  }, [hotels, destination, checkIn, checkOut, guests, priceMin, priceMax, amenities, rating, searchParams]);
 
   // Pagination logic
   const indexOfLastHotel = currentPage * hotelsPerPage;
@@ -94,6 +98,16 @@ const HotelsPage = () => {
 
   const toggleFilters = () => {
     setIsFilterVisible(!isFilterVisible);
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of results when changing pages
+    const resultsElement = document.getElementById('hotel-results');
+    if (resultsElement) {
+      resultsElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -121,7 +135,7 @@ const HotelsPage = () => {
             </div>
             
             {/* Hotel Listings */}
-            <div className="lg:col-span-3">
+            <div id="hotel-results" className="lg:col-span-3">
               {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -166,7 +180,7 @@ const HotelsPage = () => {
                             <PaginationContent>
                               <PaginationItem>
                                 <PaginationPrevious 
-                                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                  onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                                   className={currentPage === 1 ? "pointer-events-none opacity-50" : ""} 
                                 />
                               </PaginationItem>
@@ -177,7 +191,7 @@ const HotelsPage = () => {
                                   <PaginationItem key={i}>
                                     <PaginationLink 
                                       isActive={currentPage === pageNum}
-                                      onClick={() => setCurrentPage(pageNum)}
+                                      onClick={() => handlePageChange(pageNum)}
                                     >
                                       {pageNum}
                                     </PaginationLink>
@@ -187,7 +201,7 @@ const HotelsPage = () => {
                               
                               <PaginationItem>
                                 <PaginationNext 
-                                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                  onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
                                   className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""} 
                                 />
                               </PaginationItem>
