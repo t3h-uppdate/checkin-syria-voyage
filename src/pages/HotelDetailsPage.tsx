@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +15,7 @@ import RoomCard from '@/components/Hotel/RoomCard';
 import ReviewList from '@/components/Hotel/ReviewList';
 import { HOTELS, ROOMS, REVIEWS } from '@/data/mockData';
 import { Hotel } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const HotelDetailsPage = () => {
   const { t } = useTranslation();
@@ -49,20 +49,98 @@ const HotelDetailsPage = () => {
 
   // Fetch hotel data
   useEffect(() => {
-    if (id) {
-      const foundHotel = HOTELS.find(h => h.id === id);
-      if (foundHotel) {
-        setHotel(foundHotel);
-        
-        // Get rooms for this hotel
-        const hotelRooms = ROOMS[id] || [];
-        setRooms(hotelRooms);
-        
-        // Get reviews for this hotel
-        const hotelReviews = REVIEWS.filter(r => r.hotelId === id);
-        setReviews(hotelReviews);
+    const fetchHotelData = async () => {
+      if (!id) {
+        setError('No hotel ID provided');
+        setLoading(false);
+        return;
       }
-    }
+
+      try {
+        setLoading(true);
+        // Fetch hotel details
+        const { data: hotelData, error: hotelError } = await supabase
+          .from('hotels')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (hotelError) throw hotelError;
+
+        // Fetch rooms for this hotel
+        const { data: roomsData, error: roomsError } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('hotel_id', id);
+
+        if (roomsError) throw roomsError;
+
+        // Fetch reviews for this hotel
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('hotel_id', id);
+
+        if (reviewsError) throw reviewsError;
+
+        // Transform data to match our TypeScript types
+        const transformedHotel: Hotel = {
+          id: hotelData.id,
+          name: hotelData.name,
+          description: hotelData.description,
+          address: hotelData.address,
+          city: hotelData.city,
+          country: hotelData.country,
+          phoneNumber: hotelData.phone_number,
+          email: hotelData.email,
+          website: hotelData.website,
+          images: hotelData.images,
+          rating: hotelData.rating,
+          reviewCount: hotelData.review_count,
+          amenities: hotelData.amenities,
+          latitude: hotelData.latitude,
+          longitude: hotelData.longitude,
+          featuredImage: hotelData.featured_image,
+          pricePerNight: hotelData.price_per_night,
+          featured: hotelData.featured,
+          ownerId: hotelData.owner_id
+        };
+
+        const transformedRooms: any[] = roomsData.map(room => ({
+          id: room.id,
+          hotelId: room.hotel_id,
+          name: room.name,
+          description: room.description,
+          price: room.price,
+          images: room.images,
+          capacity: room.capacity,
+          bedType: room.bed_type,
+          size: room.size,
+          amenities: room.amenities,
+          available: room.available
+        }));
+
+        const transformedReviews: any[] = reviewsData.map(review => ({
+          id: review.id,
+          userId: review.user_id,
+          hotelId: review.hotel_id,
+          rating: review.rating,
+          comment: review.comment,
+          date: new Date(review.date)
+        }));
+
+        setHotel(transformedHotel);
+        setRooms(transformedRooms);
+        setReviews(transformedReviews);
+      } catch (err) {
+        console.error('Error fetching hotel data:', err);
+        setError('Failed to load hotel details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHotelData();
   }, [id]);
 
   const handleSearch = () => {
@@ -76,6 +154,18 @@ const HotelDetailsPage = () => {
     navigate(`/hotels/${id}?${params.toString()}`);
     setActiveTab('rooms');
   };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 pt-24 pb-12">
+          <div className="text-center py-12">
+            <p className="text-xl">{t('common.loading')}</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   if (!hotel) {
     return (

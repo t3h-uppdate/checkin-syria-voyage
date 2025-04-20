@@ -26,7 +26,7 @@ const FeaturedHotelsSection = () => {
       <div className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center text-red-500">
-            Det gick inte att ladda hotellen. Försök igen senare.
+            {t('errors.fetchHotels')}
           </div>
         </div>
       </div>
