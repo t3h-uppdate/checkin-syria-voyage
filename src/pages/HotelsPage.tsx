@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +16,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const HotelsPage = () => {
   const { t } = useTranslation();
@@ -44,7 +42,6 @@ const HotelsPage = () => {
 
   // Filter hotels based on search params
   useEffect(() => {
-    // Scroll to top on filter change
     window.scrollTo(0, 0);
     setCurrentPage(1);
     
@@ -86,8 +83,6 @@ const HotelsPage = () => {
       filtered = filtered.filter(hotel => hotel.rating >= rating);
     }
     
-    // TODO: In a real app, we would also filter by availability based on checkIn, checkOut, and guests
-    
     setFilteredHotels(filtered);
   }, [hotels, destination, checkIn, checkOut, guests, priceMin, priceMax, amenities, rating]);
 
@@ -103,7 +98,7 @@ const HotelsPage = () => {
 
   return (
     <MainLayout>
-      <div className="pt-24 pb-12 min-h-screen">
+      <div className="pt-24 pb-12 w-full">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">{t('common.hotels')}</h1>
@@ -120,7 +115,9 @@ const HotelsPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Filters Sidebar */}
             <div className={`lg:col-span-1 lg:block ${isFilterVisible ? 'block' : 'hidden'}`}>
-              <SearchFilters />
+              <div className="sticky top-24">
+                <SearchFilters />
+              </div>
             </div>
             
             {/* Hotel Listings */}
