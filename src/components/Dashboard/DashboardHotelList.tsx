@@ -3,25 +3,54 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon } from 'lucide-react';
+import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon, Bed } from 'lucide-react'; // Added Bed icon
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Hotel } from '@/types'; // Import Hotel type
 
-const DashboardHotelList = () => {
+interface DashboardHotelListProps {
+  onSelectHotelForRooms: (hotel: Hotel) => void;
+}
+
+const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelForRooms }) => {
   const { user } = useAuth();
-  
+
   const { data: hotels, isLoading, error, refetch } = useQuery({
     queryKey: ['owner-hotels', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: supabaseData, error } = await supabase
         .from('hotels')
-        .select('*')
+        .select('*') // Select all columns for now
         .eq('owner_id', user?.id);
 
       if (error) throw error;
-      return data;
+
+      // Map Supabase data (snake_case) to Hotel type (camelCase)
+      const mappedData: Hotel[] = supabaseData?.map((hotel: any) => ({
+        id: hotel.id,
+        name: hotel.name,
+        description: hotel.description,
+        address: hotel.address,
+        city: hotel.city,
+        country: hotel.country,
+        phoneNumber: hotel.phone_number || '', // Add default if missing
+        email: hotel.email,
+        website: hotel.website,
+        images: hotel.images || [], // Add default if missing
+        rating: hotel.rating || 0, // Add default if missing
+        reviewCount: hotel.review_count || 0, // Add default if missing
+        amenities: hotel.amenities || [], // Add default if missing
+        latitude: hotel.latitude || 0, // Add default if missing
+        longitude: hotel.longitude || 0, // Add default if missing
+        featuredImage: hotel.featured_image || '/placeholder.svg', // Map and add default
+        pricePerNight: hotel.price_per_night || 0, // Map and add default
+        featured: hotel.featured,
+        ownerId: hotel.owner_id, // Map
+      })) || [];
+
+      return mappedData;
     },
     enabled: !!user?.id,
   });
@@ -98,9 +127,9 @@ const DashboardHotelList = () => {
         {hotels.map((hotel) => (
           <Card key={hotel.id} className="overflow-hidden">
             <div className="h-48 overflow-hidden">
-              <img 
-                src={hotel.featured_image || '/placeholder.svg'} 
-                alt={hotel.name} 
+              <img
+                src={hotel.featuredImage || '/placeholder.svg'} // Use camelCase
+                alt={hotel.name}
                 className="w-full h-full object-cover transition-transform hover:scale-105"
               />
             </div>
@@ -116,7 +145,7 @@ const DashboardHotelList = () => {
                     <span className="ml-1 text-sm">{hotel.rating.toFixed(1)}</span>
                   </div>
                   <div className="text-sm font-medium">
-                    {hotel.price_per_night} kr
+                    {hotel.pricePerNight} kr {/* Use camelCase */}
                   </div>
                 </div>
               </div>
@@ -137,6 +166,11 @@ const DashboardHotelList = () => {
                     <BarChart className="h-4 w-4" />
                     <span>Statistik</span>
                   </Link>
+                </Button>
+                {/* Add Manage Rooms Button */}
+                <Button variant="outline" size="sm" onClick={() => onSelectHotelForRooms(hotel)} className="flex items-center gap-1">
+                  <Bed className="h-4 w-4" />
+                  <span>Hantera Rum</span>
                 </Button>
               </div>
 

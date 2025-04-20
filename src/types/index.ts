@@ -43,7 +43,7 @@ export interface Room {
   bedType: string;
   size: number;
   amenities: string[];
-  available: boolean;
+  available: boolean; // Reverted back to boolean based on schema
 }
 
 export interface Booking {
