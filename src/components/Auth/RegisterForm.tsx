@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -38,7 +39,7 @@ const RegisterForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { signUp } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -54,23 +55,14 @@ const RegisterForm = () => {
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    setError(null);
-    
     try {
-      // This would be an API call to register in a real app
-      console.log('Registration data:', data);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real application, this would store the JWT token
-      localStorage.setItem('isLoggedIn', 'true');
-      
-      // Redirect to home page
-      navigate('/');
+      await signUp(data.email, data.password, data.firstName, data.lastName);
+      navigate('/login');
     } catch (error) {
       console.error('Registration error:', error);
-      setError('An error occurred during registration. Please try again.');
+      form.setError('root', {
+        message: error.message || 'An error occurred during registration. Please try again.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -88,9 +80,9 @@ const RegisterForm = () => {
         <p className="text-gray-600 mt-2">Create a new account to start booking hotels in Syria.</p>
       </div>
       
-      {error && (
+      {form.formState.errors.root && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
-          <span className="block sm:inline">{error}</span>
+          <span className="block sm:inline">{form.formState.errors.root.message}</span>
         </div>
       )}
       
