@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -157,7 +158,7 @@ const HotelsPage = () => {
                   <div className="bg-white rounded-lg shadow-md p-4 mb-6">
                     <div className="flex justify-between items-center">
                       <h2 className="text-xl font-bold">
-                        {filteredHotels.length} {filteredHotels.length === 1 ? 'Hotel' : 'Hotels'} {destination ? `in "${destination}"` : ''}
+                        {filteredHotels.length} {filteredHotels.length === 1 ? 'Hotel' : 'Hotels'} {searchParamsObj.destination ? `in "${searchParamsObj.destination}"` : ''}
                       </h2>
                       {/* TODO: Add sort functionality */}
                       <div className="flex items-center space-x-2">
