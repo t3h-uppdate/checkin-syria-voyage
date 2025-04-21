@@ -35,7 +35,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const RegisterForm = () => {
+interface RegisterFormProps {
+  onRegistrationSuccess?: () => void;
+}
+
+const RegisterForm = ({ onRegistrationSuccess }: RegisterFormProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +61,11 @@ const RegisterForm = () => {
     setIsSubmitting(true);
     try {
       await signUp(data.email, data.password, data.firstName, data.lastName);
-      navigate('/login');
+      if (onRegistrationSuccess) {
+        onRegistrationSuccess();
+      } else {
+        navigate('/login');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       form.setError('root', {

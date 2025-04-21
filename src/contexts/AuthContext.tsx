@@ -44,20 +44,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (error) {
+        if (error.message === "Email not confirmed") {
+          toast({
+            title: "Email not confirmed",
+            description: "Please check your email inbox and confirm your account before logging in.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error signing in",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+        throw error;
+      }
     } catch (error) {
-      toast({
-        title: "Error signing in",
-        description: error.message,
-        variant: "destructive"
-      });
       throw error;
     }
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -65,13 +75,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             first_name: firstName,
             last_name: lastName,
           },
+          emailRedirectTo: window.location.origin + '/login',
         },
       });
+      
       if (error) throw error;
+      
+      if (data?.user?.identities?.length === 0) {
+        toast({
+          title: "User already exists",
+          description: "This email is already registered. Please log in or use a different email.",
+          variant: "destructive"
+        });
+        throw new Error("User already exists");
+      }
+      
       toast({
-        title: "Success!",
-        description: "Please check your email to confirm your account.",
+        title: "Registration successful!",
+        description: "Please check your email to confirm your account before logging in.",
       });
+      
+      return data;
     } catch (error) {
       toast({
         title: "Error signing up",
