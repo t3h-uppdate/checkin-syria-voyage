@@ -4,34 +4,72 @@ import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardHotelList from '@/components/Dashboard/DashboardHotelList';
-// import DashboardEmpty from '@/components/Dashboard/DashboardEmpty'; // Not used currently
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Hotel, Calendar, Bed } from 'lucide-react'; // Added Bed icon
-import RoomManagement from '@/components/Dashboard/RoomManagement'; // Import RoomManagement
-import BookingRequestsList from '@/components/Dashboard/BookingRequestsList'; // Import BookingRequestsList
-import { Hotel as HotelType } from '@/types'; // Import Hotel type
+import { Loader2, Hotel, Calendar, Bed } from 'lucide-react';
+import RoomManagement from '@/components/Dashboard/RoomManagement';
+import BookingRequestsList from '@/components/Dashboard/BookingRequestsList';
+import { Hotel as HotelType } from '@/types';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const DashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedHotel, setSelectedHotel] = useState<HotelType | null>(null);
   const [activeTab, setActiveTab] = useState<string>("hotels");
+  const [loading, setLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   const handleSelectHotelForRooms = (hotel: HotelType) => {
     setSelectedHotel(hotel);
-    setActiveTab("rooms"); // Switch to rooms tab when a hotel is selected
+    setActiveTab("rooms");
   };
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
+    const checkUserRole = async () => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
 
-    window.scrollTo(0, 0);
-  }, [user, navigate]);
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
 
-  if (!user) {
+        if (error) throw error;
+
+        if (profile.role !== 'owner' && profile.role !== 'admin') {
+          toast({
+            title: "Åtkomst nekad",
+            description: "Du måste vara hotellägare eller administratör för att komma åt denna sida.",
+            variant: "destructive"
+          });
+          navigate('/');
+          return;
+        }
+
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('Error checking user role:', error);
+        toast({
+          title: "Ett fel uppstod",
+          description: "Kunde inte verifiera din behörighet.",
+          variant: "destructive"
+        });
+        navigate('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUserRole();
+  }, [user, navigate, toast]);
+
+  if (loading) {
     return (
       <MainLayout>
         <div className="pt-24 pb-12 min-h-[80vh]">
@@ -43,6 +81,10 @@ const DashboardPage = () => {
         </div>
       </MainLayout>
     );
+  }
+
+  if (!isAuthorized) {
+    return null;
   }
 
   return (
