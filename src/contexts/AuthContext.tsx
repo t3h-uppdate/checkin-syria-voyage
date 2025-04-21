@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Please check your email to confirm your account before logging in.",
       });
       
-      return data;
+      // We're not returning data anymore, to match the Promise<void> return type
     } catch (error) {
       toast({
         title: "Error signing up",
