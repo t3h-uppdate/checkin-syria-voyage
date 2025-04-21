@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Menu, Search, User, ChevronDown, LogOut, Hotel } from 'lucide-react';
+import { Menu, Search, User, ChevronDown, LogOut, Hotel, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -21,7 +20,6 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
 
-  // Change header on scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -51,7 +49,6 @@ const Header = () => {
     }
   };
 
-  // Set initial direction based on language
   useEffect(() => {
     const savedLang = localStorage.getItem('language');
     if (savedLang) {
@@ -74,7 +71,6 @@ const Header = () => {
     >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
-          {/* Logo */}
           <Link to="/" className="flex items-center">
             <h1 
               className={`text-2xl font-bold transition-colors duration-300 ${
@@ -85,7 +81,6 @@ const Header = () => {
             </h1>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
@@ -125,6 +120,12 @@ const Header = () => {
                       <span>Dashboard</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
                     <LogOut className="h-4 w-4" />
                     <span>Logga ut</span>
@@ -142,7 +143,6 @@ const Header = () => {
               </Link>
             )}
             
-            {/* Language Toggle */}
             <Button
               variant="ghost"
               size="sm"
@@ -155,7 +155,6 @@ const Header = () => {
             </Button>
           </nav>
 
-          {/* Mobile Menu Button */}
           <div className="flex items-center md:hidden">
             <Button 
               variant="ghost" 
@@ -168,7 +167,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
