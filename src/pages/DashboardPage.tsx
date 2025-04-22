@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -93,10 +92,10 @@ const DashboardPage = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-3 mb-8">
             <Hotel className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Hotellägare Dashboard</h1>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6"> {/* Control Tabs state */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
               <TabsTrigger value="hotels" className="flex items-center gap-2">
                 <Hotel className="h-4 w-4" />
@@ -113,12 +112,10 @@ const DashboardPage = () => {
             </TabsList>
 
             <TabsContent value="hotels">
-              {/* Pass the handler function to DashboardHotelList */}
               <DashboardHotelList onSelectHotelForRooms={handleSelectHotelForRooms} />
             </TabsContent>
 
             <TabsContent value="bookings">
-              {/* Replace placeholder with the actual component */}
               <BookingRequestsList />
             </TabsContent>
 
