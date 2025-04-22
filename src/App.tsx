@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +15,7 @@ import DashboardPage from "./pages/DashboardPage";
 import GuestProfilePage from "./pages/GuestProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
 
@@ -38,6 +38,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
               <Route path="/guest/:userId" element={<GuestProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />
