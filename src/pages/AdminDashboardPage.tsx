@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/Layout/MainLayout";
@@ -48,34 +49,43 @@ const AdminDashboardPage = () => {
   useEffect(() => {
     const checkIfAdmin = async () => {
       if (!user) {
+        console.log("No user found, redirecting to login");
         navigate("/login");
         return;
       }
+      
       try {
+        console.log("Checking if user is admin...");
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", user.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching profile:", error);
+          throw error;
+        }
 
-        if (profile.role !== "admin") {
+        console.log("User profile retrieved:", profile);
+        if (!profile || profile.role !== "admin") {
+          console.log("User is not an admin, role:", profile?.role);
           toast({
-            title: "Åtkomst nekad",
-            description: "Du måste vara administratör för att komma åt denna sida.",
+            title: "Access denied",
+            description: "You must be an administrator to access this page.",
             variant: "destructive"
           });
           navigate("/");
           return;
         }
 
+        console.log("User is admin, allowing access");
         setIsAdmin(true);
       } catch (error) {
         console.error("Error checking admin status:", error);
         toast({
-          title: "Ett fel uppstod",
-          description: "Kunde inte verifiera din behörighet.",
+          title: "An error occurred",
+          description: "Could not verify your permissions.",
           variant: "destructive"
         });
         navigate("/");
@@ -228,6 +238,7 @@ const AdminDashboardPage = () => {
       <MainLayout>
         <div className="pt-24 pb-12 min-h-[80vh] flex justify-center items-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="ml-2">Verifying admin access...</p>
         </div>
       </MainLayout>
     );

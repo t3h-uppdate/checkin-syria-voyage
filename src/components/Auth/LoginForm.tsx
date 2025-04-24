@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -32,7 +33,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuth();
+  const { signIn, user, userRole } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -43,16 +44,32 @@ const LoginForm = () => {
     },
   });
 
+  // Redirect user if already logged in
+  useEffect(() => {
+    if (user) {
+      console.log("User already logged in, redirecting...");
+      if (userRole === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (userRole === 'owner') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, userRole, navigate]);
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     setError(null);
     
     try {
       await signIn(data.email, data.password);
-      navigate('/dashboard');
+      
+      // Role-based redirect handled by useEffect when auth state changes
+      console.log("Login successful, redirecting will happen via useEffect");
     } catch (error) {
       console.error('Login error:', error);
-      setError('Ogiltig e-post eller lösenord. Försök igen.');
+      setError('Invalid email or password. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
