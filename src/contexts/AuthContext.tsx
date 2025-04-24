@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   userRole: UserRole | null;
+  userBanned: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userBanned, setUserBanned] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -28,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_banned')
         .eq('id', userId)
         .single();
       
@@ -36,7 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (data?.role) {
         setUserRole(data.role as UserRole);
-        console.log("User role set:", data.role);
+        setUserBanned(data.is_banned || false);
+        console.log("User role set:", data.role, "Ban status:", data.is_banned);
       }
     } catch (error) {
       console.error('Error fetching user role:', error);
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }, 0);
         } else {
           setUserRole(null);
+          setUserBanned(false);
         }
         
         setLoading(false);
@@ -149,8 +153,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear user role on sign out
+      // Clear user states on sign out
       setUserRole(null);
+      setUserBanned(false);
     } catch (error) {
       toast({
         title: "Error signing out",
@@ -162,7 +167,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, userRole, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      loading, 
+      userRole, 
+      userBanned, 
+      signIn, 
+      signUp, 
+      signOut 
+    }}>
       {children}
     </AuthContext.Provider>
   );

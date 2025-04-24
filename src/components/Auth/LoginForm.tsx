@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -33,7 +35,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn, user, userRole } = useAuth();
+  const { signIn, user, userRole, userBanned } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -47,16 +49,22 @@ const LoginForm = () => {
   // Redirect user if already logged in
   useEffect(() => {
     if (user) {
-      console.log("User already logged in, redirecting...", { userRole });
+      console.log("User already logged in, redirecting...", { userRole, userBanned });
+      
+      if (userBanned) {
+        setError("Your account has been suspended. Please contact support for assistance.");
+        return;
+      }
+      
       if (userRole === 'admin') {
-        navigate('/admin-dashboard');
+        navigate('/admin-control-panel');
       } else if (userRole === 'owner') {
         navigate('/dashboard');
       } else {
         navigate('/');
       }
     }
-  }, [user, userRole, navigate]);
+  }, [user, userRole, userBanned, navigate]);
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
@@ -87,9 +95,19 @@ const LoginForm = () => {
       </div>
       
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
-          <span className="block sm:inline">{error}</span>
-        </div>
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {userBanned && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Account Suspended</AlertTitle>
+          <AlertDescription>Your account has been suspended. Please contact support for assistance.</AlertDescription>
+        </Alert>
       )}
       
       <Form {...form}>
@@ -150,7 +168,7 @@ const LoginForm = () => {
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isSubmitting}
+            disabled={isSubmitting || userBanned}
           >
             {isSubmitting ? 'Loggar in...' : t('auth.signIn')}
           </Button>
