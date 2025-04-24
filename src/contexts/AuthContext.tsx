@@ -134,8 +134,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Registration successful!",
         description: "Please check your email to confirm your account before logging in.",
       });
-      
-      // We're not returning data anymore, to match the Promise<void> return type
     } catch (error) {
       toast({
         title: "Error signing up",
@@ -150,6 +148,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear user role on sign out
+      setUserRole(null);
     } catch (error) {
       toast({
         title: "Error signing out",

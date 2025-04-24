@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/Layout/MainLayout";
@@ -23,7 +22,7 @@ type Profile = {
   email: string;
   phone_number: string | null;
   profile_picture: string | null;
-  role: string;
+  role: UserRole;
 };
 
 type HotelCount = {
@@ -31,7 +30,7 @@ type HotelCount = {
 };
 
 const AdminDashboardPage = () => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -54,8 +53,16 @@ const AdminDashboardPage = () => {
         return;
       }
       
+      console.log("Checking if user is admin... Current role from context:", userRole);
+      
+      if (userRole === 'admin') {
+        console.log("User confirmed as admin via context");
+        setIsAdmin(true);
+        setLoading(false);
+        return;
+      }
+      
       try {
-        console.log("Checking if user is admin...");
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("role")
@@ -67,7 +74,7 @@ const AdminDashboardPage = () => {
           throw error;
         }
 
-        console.log("User profile retrieved:", profile);
+        console.log("User profile retrieved from database:", profile);
         if (!profile || profile.role !== "admin") {
           console.log("User is not an admin, role:", profile?.role);
           toast({
@@ -95,7 +102,7 @@ const AdminDashboardPage = () => {
     };
 
     checkIfAdmin();
-  }, [user, navigate, toast]);
+  }, [user, navigate, toast, userRole]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -161,7 +168,7 @@ const AdminDashboardPage = () => {
         if (user) setOwners(prev => [...prev, {...user, role: "owner"}]);
       } else if (newRole === "guest") {
         setOwners(prev => prev.filter(o => o.id !== userId));
-        const user = owners.find(o => o.id === userId);
+        const user = owners.find(o => o.id !== userId);
         if (user) setGuests(prev => [...prev, {...user, role: "guest"}]);
       }
     } catch (error) {
@@ -244,7 +251,18 @@ const AdminDashboardPage = () => {
     );
   }
 
-  if (!isAdmin) return null;
+  if (!isAdmin) {
+    return (
+      <MainLayout>
+        <div className="pt-24 pb-12 min-h-[80vh] flex flex-col justify-center items-center">
+          <Shield className="h-16 w-16 text-muted-foreground mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-muted-foreground mb-6">You must have admin privileges to access this page.</p>
+          <Button onClick={() => navigate("/")}>Return to Home</Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

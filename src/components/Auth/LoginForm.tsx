@@ -47,7 +47,7 @@ const LoginForm = () => {
   // Redirect user if already logged in
   useEffect(() => {
     if (user) {
-      console.log("User already logged in, redirecting...");
+      console.log("User already logged in, redirecting...", { userRole });
       if (userRole === 'admin') {
         navigate('/admin-dashboard');
       } else if (userRole === 'owner') {
@@ -64,9 +64,8 @@ const LoginForm = () => {
     
     try {
       await signIn(data.email, data.password);
-      
-      // Role-based redirect handled by useEffect when auth state changes
-      console.log("Login successful, redirecting will happen via useEffect");
+      console.log("Login successful, waiting for role to be set before redirect");
+      // Redirection will happen via useEffect when auth state changes
     } catch (error) {
       console.error('Login error:', error);
       setError('Invalid email or password. Please try again.');

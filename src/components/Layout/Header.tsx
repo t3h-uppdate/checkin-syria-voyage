@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Menu, Search, User, ChevronDown, LogOut, Hotel, Settings } from 'lucide-react';
+import { Menu, Search, User, ChevronDown, LogOut, Hotel, Settings, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,7 +19,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, userRole } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,6 +61,8 @@ const Header = () => {
   }, [i18n]);
 
   const isHomePage = location.pathname === '/';
+  
+  console.log("Current user role in Header:", userRole); // Debug log
 
   return (
     <header 
@@ -114,6 +117,14 @@ const Header = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {userRole === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin-dashboard" className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="flex items-center gap-2">
                       <Hotel className="h-4 w-4" />
@@ -192,6 +203,16 @@ const Header = () => {
               
               {user ? (
                 <>
+                  {userRole === 'admin' && (
+                    <Link 
+                      to="/admin-dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-gray-700 hover:text-primary flex items-center gap-2"
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Admin Dashboard</span>
+                    </Link>
+                  )}
                   <Link 
                     to="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
