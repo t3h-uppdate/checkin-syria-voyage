@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, is_banned')
+        .select('role')
         .eq('id', userId)
         .single();
       
@@ -38,8 +38,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (data?.role) {
         setUserRole(data.role as UserRole);
-        setUserBanned(data.is_banned || false);
-        console.log("User role set:", data.role, "Ban status:", data.is_banned);
+        // Since is_banned doesn't exist in the current schema, defaulting to false
+        setUserBanned(false);
+        console.log("User role set:", data.role);
       }
     } catch (error) {
       console.error('Error fetching user role:', error);

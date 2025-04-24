@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/Layout/MainLayout";
@@ -40,7 +39,7 @@ type Profile = {
   phone_number: string | null;
   profile_picture: string | null;
   role: UserRole;
-  is_banned?: boolean;
+  is_banned?: boolean; // Make this optional since it doesn't exist in the database yet
   email_verified?: boolean;
   id_verified?: boolean;
 };
@@ -146,17 +145,17 @@ const AdminDashboardPage = () => {
     const fetchUsers = async () => {
       setLoadingUsers(true);
       try {
-        // Extend the profiles query to include additional user status information
+        // Fetch profiles from the database
         const { data, error } = await supabase
           .from("profiles")
           .select("*");
 
         if (error) throw error;
 
-        // Simulate some verification data (in a real app, this would come from the database)
+        // Since is_banned doesn't exist in the database, we need to add it manually
         const enhancedData = (data || []).map(profile => ({
           ...profile,
-          is_banned: profile.is_banned || false,
+          is_banned: false, // Adding this property since it doesn't exist in the database yet
           email_verified: true, // This would come from auth.users in a real implementation
           id_verified: Math.random() > 0.5 // Just for demo purposes
         }));
@@ -273,7 +272,7 @@ const AdminDashboardPage = () => {
         if (user) setOwners(prev => [...prev, {...user, role: "owner"}]);
       } else if (newRole === "guest") {
         setOwners(prev => prev.filter(o => o.id !== userId));
-        const user = owners.find(o => o.id !== userId);
+        const user = owners.find(o => o.id === userId);
         if (user) setGuests(prev => [...prev, {...user, role: "guest"}]);
       }
     } catch (error) {
@@ -843,234 +842,4 @@ const AdminDashboardPage = () => {
                                       <div className="flex items-center justify-between">
                                         <Label htmlFor={`email-verified-${guest.id}`}>Email verifierad</Label>
                                         <Switch 
-                                          id={`email-verified-${guest.id}`}
-                                          checked={guest.email_verified}
-                                          disabled
-                                        />
-                                      </div>
-                                      <div className="flex items-center justify-between">
-                                        <Label htmlFor={`id-verified-${guest.id}`}>ID verifierad</Label>
-                                        <Switch 
-                                          id={`id-verified-${guest.id}`}
-                                          checked={guest.id_verified}
-                                          // In a real app, you'd update this in the database
-                                          onCheckedChange={(checked) => {
-                                            setGuests(guests.map(g => 
-                                              g.id === guest.id ? {...g, id_verified: checked} : g
-                                            ));
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8 border rounded-md bg-muted/20">
-                  <p className="text-muted-foreground">Inga gäster hittades{searchTerm ? " som matchar sökningen" : ""}.</p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="reports">
-              <div className="mb-4 flex flex-col sm:flex-row gap-4 justify-between">
-                <div>
-                  <h3 className="text-lg font-medium mb-1">Användarrapporter</h3>
-                  <p className="text-sm text-muted-foreground">Hantera rapporter och klagomål från användare</p>
-                </div>
-                <Select
-                  value={reportStatusFilter}
-                  onValueChange={(value) => setReportStatusFilter(value)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filtrera efter status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alla rapporter</SelectItem>
-                    <SelectItem value="pending">Väntar på behandling</SelectItem>
-                    <SelectItem value="reviewed">Under granskning</SelectItem>
-                    <SelectItem value="resolved">Löst</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {loadingReports ? (
-                <div className="flex justify-center items-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : getFilteredReports().length ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Rapporterad användare</TableHead>
-                        <TableHead>Typ</TableHead>
-                        <TableHead>Rapporterad av</TableHead>
-                        <TableHead>Datum</TableHead>
-                        <TableHead className="text-right">Åtgärder</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {getFilteredReports().map((report) => (
-                        <TableRow key={report.id}>
-                          <TableCell>
-                            {report.status === 'pending' && (
-                              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                Väntar
-                              </Badge>
-                            )}
-                            {report.status === 'reviewed' && (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                Under granskning
-                              </Badge>
-                            )}
-                            {report.status === 'resolved' && (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                Löst
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {findUserNameById(report.reported_user_id)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="font-normal">
-                              {report.report_type === 'inappropriate_behavior' && 'Olämpligt beteende'}
-                              {report.report_type === 'damage' && 'Skada på egendom'}
-                              {report.report_type === 'fraud' && 'Bedrägeri'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {report.reporter_name || findUserNameById(report.reporter_id)}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(report.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => setSelectedReport(report)}>
-                                  <PenSquare className="h-4 w-4 mr-2" />
-                                  Hantera
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[500px]">
-                                <DialogHeader>
-                                  <DialogTitle>Användarrapport</DialogTitle>
-                                  <DialogDescription>
-                                    Granska och hantera denna användarrapport
-                                  </DialogDescription>
-                                </DialogHeader>
-                                
-                                {selectedReport && (
-                                  <div className="space-y-4 pt-4">
-                                    <div className="space-y-2">
-                                      <h4 className="text-sm font-medium">Rapporttyp</h4>
-                                      <Badge className="font-normal">
-                                        {selectedReport.report_type === 'inappropriate_behavior' && 'Olämpligt beteende'}
-                                        {selectedReport.report_type === 'damage' && 'Skada på egendom'}
-                                        {selectedReport.report_type === 'fraud' && 'Bedrägeri'}
-                                      </Badge>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                      <h4 className="text-sm font-medium">Beskrivning</h4>
-                                      <p className="text-sm border rounded-md p-3 bg-muted/20">
-                                        {selectedReport.description}
-                                      </p>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="space-y-2">
-                                        <h4 className="text-sm font-medium">Rapporterad användare</h4>
-                                        <p className="text-sm">
-                                          {findUserNameById(selectedReport.reported_user_id)}
-                                        </p>
-                                      </div>
-                                      
-                                      <div className="space-y-2">
-                                        <h4 className="text-sm font-medium">Rapporterad av</h4>
-                                        <p className="text-sm">
-                                          {selectedReport.reporter_name || findUserNameById(selectedReport.reporter_id)}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                      <h4 className="text-sm font-medium">Status</h4>
-                                      <RadioGroup 
-                                        value={selectedReport.status} 
-                                        onValueChange={(value: 'pending' | 'reviewed' | 'resolved') => {
-                                          setSelectedReport({
-                                            ...selectedReport,
-                                            status: value
-                                          });
-                                        }}
-                                      >
-                                        <div className="flex items-center space-x-2">
-                                          <RadioGroupItem value="pending" id="pending" />
-                                          <Label htmlFor="pending">Väntar på behandling</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                          <RadioGroupItem value="reviewed" id="reviewed" />
-                                          <Label htmlFor="reviewed">Under granskning</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                          <RadioGroupItem value="resolved" id="resolved" />
-                                          <Label htmlFor="resolved">Löst</Label>
-                                        </div>
-                                      </RadioGroup>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                <DialogFooter>
-                                  <Button 
-                                    variant="outline" 
-                                    onClick={() => setSelectedReport(null)}
-                                  >
-                                    Avbryt
-                                  </Button>
-                                  <Button 
-                                    onClick={() => {
-                                      if (selectedReport) {
-                                        handleReportStatusChange(
-                                          selectedReport.id,
-                                          selectedReport.status
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    Spara ändringar
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8 border rounded-md bg-muted/20">
-                  <p className="text-muted-foreground">Inga rapporter hittades{reportStatusFilter !== 'all' ? " med den valda statusen" : ""}.</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </MainLayout>
-  );
-};
-
-export default AdminDashboardPage;
+                                          id={`email-verified-${guest.id
