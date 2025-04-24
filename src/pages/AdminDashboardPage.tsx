@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/Layout/MainLayout";
@@ -14,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { UserRole } from "@/types";
 
 type Profile = {
   id: string;
@@ -102,7 +102,6 @@ const AdminDashboardPage = () => {
         setOwners((data ?? []).filter(p => p.role === "owner"));
         setGuests((data ?? []).filter(p => p.role === "guest"));
         
-        // Fetch hotel counts for owners
         const { data: hotels, error: hotelsError } = await supabase
           .from("hotels")
           .select("owner_id");
@@ -132,7 +131,7 @@ const AdminDashboardPage = () => {
     fetchUsers();
   }, [isAdmin, toast]);
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
     try {
       const { error } = await supabase
         .from("profiles")
@@ -146,7 +145,6 @@ const AdminDashboardPage = () => {
         description: `Användarens roll har ändrats till ${newRole}.`,
       });
       
-      // Update local state
       if (newRole === "owner") {
         setGuests(prev => prev.filter(g => g.id !== userId));
         const user = guests.find(g => g.id === userId);
@@ -174,7 +172,7 @@ const AdminDashboardPage = () => {
     );
   };
 
-  const handleBulkRoleChange = async (newRole: string) => {
+  const handleBulkRoleChange = async (newRole: UserRole) => {
     if (!selectedUsers.length) return;
     
     try {
@@ -190,7 +188,6 @@ const AdminDashboardPage = () => {
         description: `${selectedUsers.length} användare har fått rollen ${newRole}.`,
       });
       
-      // Refetch users to update the UI
       setLoadingUsers(true);
       const { data, error: fetchError } = await supabase
         .from("profiles")

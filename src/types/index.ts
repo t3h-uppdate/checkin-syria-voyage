@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -78,3 +77,5 @@ export interface SearchFilters {
   amenities?: string[];
   rating?: number;
 }
+
+export type UserRole = 'guest' | 'owner' | 'admin';
