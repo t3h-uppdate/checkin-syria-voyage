@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
@@ -118,12 +119,21 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {userRole === 'admin' && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin-dashboard" className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        <span>Admin Dashboard</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin-control-panel" className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          <span>Admin Control Panel</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin-dashboard" className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          <span>User Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
                   )}
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="flex items-center gap-2">
@@ -137,6 +147,7 @@ const Header = () => {
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
                     <LogOut className="h-4 w-4" />
                     <span>Logga ut</span>
@@ -204,14 +215,24 @@ const Header = () => {
               {user ? (
                 <>
                   {userRole === 'admin' && (
-                    <Link 
-                      to="/admin-dashboard"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-gray-700 hover:text-primary flex items-center gap-2"
-                    >
-                      <Shield className="h-4 w-4" />
-                      <span>Admin Dashboard</span>
-                    </Link>
+                    <>
+                      <Link 
+                        to="/admin-control-panel"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-gray-700 hover:text-primary flex items-center gap-2"
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Control Panel</span>
+                      </Link>
+                      <Link 
+                        to="/admin-dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-gray-700 hover:text-primary flex items-center gap-2"
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>User Dashboard</span>
+                      </Link>
+                    </>
                   )}
                   <Link 
                     to="/dashboard"
@@ -220,6 +241,14 @@ const Header = () => {
                   >
                     <Hotel className="h-4 w-4" />
                     <span>Dashboard</span>
+                  </Link>
+                  <Link 
+                    to="/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
                   </Link>
                   <Button
                     variant="ghost"

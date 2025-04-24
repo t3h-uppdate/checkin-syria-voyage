@@ -18,9 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -36,6 +35,8 @@ const LoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { signIn, user, userRole, userBanned } = useAuth();
+  const [loginComplete, setLoginComplete] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -49,19 +50,38 @@ const LoginForm = () => {
   // Redirect user if already logged in
   useEffect(() => {
     if (user) {
-      console.log("User already logged in, redirecting...", { userRole, userBanned });
+      console.log("User already logged in, checking role...", { userRole, userBanned });
       
       if (userBanned) {
         setError("Your account has been suspended. Please contact support for assistance.");
         return;
       }
       
-      if (userRole === 'admin') {
-        navigate('/admin-control-panel');
-      } else if (userRole === 'owner') {
-        navigate('/dashboard');
-      } else {
-        navigate('/');
+      if (userRole) {
+        console.log("User role detected, proceeding with redirect to appropriate page");
+        setLoginComplete(true);
+        
+        // Start countdown
+        let countdown = 3;
+        const timer = setInterval(() => {
+          countdown -= 1;
+          setRedirectCountdown(countdown);
+          
+          if (countdown <= 0) {
+            clearInterval(timer);
+            
+            if (userRole === 'admin') {
+              console.log("Redirecting admin user to admin control panel");
+              navigate('/admin-control-panel');
+            } else if (userRole === 'owner') {
+              navigate('/dashboard');
+            } else {
+              navigate('/');
+            }
+          }
+        }, 1000);
+        
+        return () => clearInterval(timer);
       }
     }
   }, [user, userRole, userBanned, navigate]);
@@ -91,7 +111,7 @@ const LoginForm = () => {
     >
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold">{t('auth.login')}</h1>
-        <p className="text-gray-600 mt-2">Välkommen tillbaka! Logga in på ditt konto.</p>
+        <p className="text-gray-600 mt-2">Welcome back! Log in to your account.</p>
       </div>
       
       {error && (
@@ -110,70 +130,92 @@ const LoginForm = () => {
         </Alert>
       )}
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('auth.email')}</FormLabel>
-                <FormControl>
-                  <Input type="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex justify-between items-center">
-                  <FormLabel>{t('auth.password')}</FormLabel>
-                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                    {t('auth.forgotPassword')}
-                  </Link>
-                </div>
-                <FormControl>
-                  <Input type="password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="rememberMe"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="font-normal">
-                    {t('auth.rememberMe')}
-                  </FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
-          
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isSubmitting || userBanned}
-          >
-            {isSubmitting ? 'Loggar in...' : t('auth.signIn')}
-          </Button>
-        </form>
-      </Form>
+      {loginComplete ? (
+        <Alert className="mb-6 border-green-500 bg-green-50">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-green-500" />
+            <AlertTitle className="text-green-700">Login Successful!</AlertTitle>
+          </div>
+          <AlertDescription className="mt-2">
+            {userRole === 'admin' 
+              ? "Welcome, admin! Redirecting you to the Admin Control Panel" 
+              : "Welcome back! Redirecting you to the dashboard"}
+            <span className="font-medium"> in {redirectCountdown} seconds...</span>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('auth.email')}</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>{t('auth.password')}</FormLabel>
+                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                      {t('auth.forgotPassword')}
+                    </Link>
+                  </div>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="font-normal">
+                      {t('auth.rememberMe')}
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+            
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting || userBanned}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> 
+                  Logging in...
+                </span>
+              ) : (
+                t('auth.signIn')
+              )}
+            </Button>
+          </form>
+        </Form>
+      )}
       
       <div className="text-center mt-8">
         <p className="text-gray-600">

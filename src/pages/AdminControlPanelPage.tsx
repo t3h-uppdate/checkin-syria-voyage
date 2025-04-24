@@ -4,12 +4,15 @@ import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/Layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Settings, FileText, Loader2 } from "lucide-react";
+import { Shield, Users, Settings, FileText, Loader2, LineChart, AlertOctagon, Bell, Mail, Lock, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import SystemSettings from "@/components/Admin/SystemSettings";
 import ContentManagement from "@/components/Admin/ContentManagement";
+import UserManagement from "@/components/Admin/UserManagement";
+import SiteAnalytics from "@/components/Admin/SiteAnalytics";
+import SecuritySettings from "@/components/Admin/SecuritySettings";
 
 const AdminControlPanelPage = () => {
   const { user, userRole } = useAuth();
@@ -36,6 +39,7 @@ const AdminControlPanelPage = () => {
       }
       
       try {
+        console.log("Checking user profile in database...");
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("role")
@@ -110,10 +114,19 @@ const AdminControlPanelPage = () => {
               <Shield className="h-8 w-8 text-primary" />
               <h1 className="text-3xl font-bold">Admin Control Panel</h1>
             </div>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                View Site
+              </Button>
+              <Button variant="default" onClick={() => navigate("/admin-dashboard")}>
+                User Dashboard
+              </Button>
+            </div>
           </div>
 
           <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 flex flex-wrap">
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 <span>User Management</span>
@@ -126,17 +139,18 @@ const AdminControlPanelPage = () => {
                 <FileText className="h-4 w-4" />
                 <span>Content Management</span>
               </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <LineChart className="h-4 w-4" />
+                <span>Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                <span>Security</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="users">
-              <div className="mb-4">
-                <Button onClick={() => navigate("/admin-dashboard")}>
-                  Go to User Management
-                </Button>
-              </div>
-              <p className="text-muted-foreground">
-                User management features are available on the dedicated User Management Dashboard.
-              </p>
+              <UserManagement />
             </TabsContent>
 
             <TabsContent value="settings">
@@ -145,6 +159,14 @@ const AdminControlPanelPage = () => {
 
             <TabsContent value="content">
               <ContentManagement />
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <SiteAnalytics />
+            </TabsContent>
+
+            <TabsContent value="security">
+              <SecuritySettings />
             </TabsContent>
           </Tabs>
         </div>
