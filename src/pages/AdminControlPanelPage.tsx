@@ -4,7 +4,26 @@ import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/Layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Settings, FileText, Loader2, LineChart, AlertOctagon, Bell, Mail, Lock, Globe } from "lucide-react";
+import { 
+  Shield, 
+  Users, 
+  Settings, 
+  FileText, 
+  Loader2, 
+  LineChart, 
+  AlertOctagon, 
+  Bell, 
+  Mail, 
+  Lock, 
+  Globe, 
+  Building,
+  Hotel,
+  CreditCard,
+  Ticket,
+  Flag,
+  Database,
+  Megaphone
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +32,12 @@ import ContentManagement from "@/components/Admin/ContentManagement";
 import UserManagement from "@/components/Admin/UserManagement";
 import SiteAnalytics from "@/components/Admin/SiteAnalytics";
 import SecuritySettings from "@/components/Admin/SecuritySettings";
+import HotelManagement from "@/components/Admin/HotelManagement";
+import SupportTickets from "@/components/Admin/SupportTickets";
+import ReviewModeration from "@/components/Admin/ReviewModeration";
+import BillingPayments from "@/components/Admin/BillingPayments";
+import SystemLogs from "@/components/Admin/SystemLogs";
+import Notifications from "@/components/Admin/Notifications";
 
 const AdminControlPanelPage = () => {
   const { user, userRole } = useAuth();
@@ -119,54 +144,99 @@ const AdminControlPanelPage = () => {
               <Button variant="outline" onClick={() => navigate("/")}>
                 View Site
               </Button>
-              <Button variant="default" onClick={() => navigate("/admin-dashboard")}>
-                User Dashboard
-              </Button>
             </div>
           </div>
 
-          <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="mb-4 flex flex-wrap">
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="mb-4 flex flex-wrap gap-2">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <LineChart className="h-4 w-4" />
+                <span>Overview & Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger value="hotels" className="flex items-center gap-2">
+                <Hotel className="h-4 w-4" />
+                <span>Hotel Management</span>
+              </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 <span>User Management</span>
               </TabsTrigger>
+              <TabsTrigger value="support" className="flex items-center gap-2">
+                <Ticket className="h-4 w-4" />
+                <span>Support Tickets</span>
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="flex items-center gap-2">
+                <Flag className="h-4 w-4" />
+                <span>Review Moderation</span>
+              </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
-                <span>System Settings</span>
+                <span>Platform Settings</span>
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span>Content Management</span>
+              <TabsTrigger value="billing" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                <span>Billing & Payments</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <LineChart className="h-4 w-4" />
-                <span>Analytics</span>
+              <TabsTrigger value="logs" className="flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                <span>API & System Logs</span>
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4" />
+                <span>Notifications & Campaigns</span>
               </TabsTrigger>
               <TabsTrigger value="security" className="flex items-center gap-2">
                 <Lock className="h-4 w-4" />
                 <span>Security</span>
               </TabsTrigger>
+              <TabsTrigger value="content" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span>Content</span>
+              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="overview">
+              <SiteAnalytics />
+            </TabsContent>
+            
+            <TabsContent value="hotels">
+              <HotelManagement />
+            </TabsContent>
 
             <TabsContent value="users">
               <UserManagement />
+            </TabsContent>
+            
+            <TabsContent value="support">
+              <SupportTickets />
+            </TabsContent>
+            
+            <TabsContent value="reviews">
+              <ReviewModeration />
             </TabsContent>
 
             <TabsContent value="settings">
               <SystemSettings />
             </TabsContent>
-
-            <TabsContent value="content">
-              <ContentManagement />
+            
+            <TabsContent value="billing">
+              <BillingPayments />
             </TabsContent>
-
-            <TabsContent value="analytics">
-              <SiteAnalytics />
+            
+            <TabsContent value="logs">
+              <SystemLogs />
+            </TabsContent>
+            
+            <TabsContent value="notifications">
+              <Notifications />
             </TabsContent>
 
             <TabsContent value="security">
               <SecuritySettings />
+            </TabsContent>
+
+            <TabsContent value="content">
+              <ContentManagement />
             </TabsContent>
           </Tabs>
         </div>

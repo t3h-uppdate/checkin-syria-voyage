@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/Layout/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Loader2, Users, Settings, ChartBar, FileText, ShieldAlert } from "lucide-react";
 import SiteAnalytics from "@/components/Admin/SiteAnalytics";
 import SecuritySettings from "@/components/Admin/SecuritySettings";

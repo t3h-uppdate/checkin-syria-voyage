@@ -16,7 +16,6 @@ import DashboardPage from "./pages/DashboardPage";
 import GuestProfilePage from "./pages/GuestProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminControlPanelPage from "./pages/AdminControlPanelPage";
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
@@ -42,7 +41,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin-dashboard" element={<AdminControlPanelPage />} />
               <Route path="/admin-control-panel" element={<AdminControlPanelPage />} />
               <Route path="/guest/:userId" element={<GuestProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
