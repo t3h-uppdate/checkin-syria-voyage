@@ -1,12 +1,28 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardHotelList from '@/components/Dashboard/DashboardHotelList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Hotel, Calendar, Bed } from 'lucide-react';
+import { 
+  Loader2, 
+  Hotel, 
+  Calendar, 
+  Bed, 
+  MessageSquare, 
+  Star, 
+  Receipt, 
+  Percent,
+  Coffee 
+} from 'lucide-react';
 import RoomManagement from '@/components/Dashboard/RoomManagement';
 import BookingRequestsList from '@/components/Dashboard/BookingRequestsList';
+import HotelServices from '@/components/Dashboard/HotelServices';
+import GuestMessages from '@/components/Dashboard/GuestMessages';
+import ReviewsManagement from '@/components/Dashboard/ReviewsManagement';
+import RevenueReports from '@/components/Dashboard/RevenueReports';
+import PromotionsManagement from '@/components/Dashboard/PromotionsManagement';
 import { Hotel as HotelType } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -92,11 +108,11 @@ const DashboardPage = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-3 mb-8">
             <Hotel className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold">Hotel Dashboard</h1>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList>
+            <TabsList className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <TabsTrigger value="hotels" className="flex items-center gap-2">
                 <Hotel className="h-4 w-4" />
                 <span>Mina Hotell</span>
@@ -108,6 +124,26 @@ const DashboardPage = () => {
               <TabsTrigger value="rooms" className="flex items-center gap-2">
                 <Bed className="h-4 w-4" />
                 <span>Rumhantering</span>
+              </TabsTrigger>
+              <TabsTrigger value="services" className="flex items-center gap-2">
+                <Coffee className="h-4 w-4" />
+                <span>Tjänster</span>
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span>Meddelanden</span>
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                <span>Recensioner</span>
+              </TabsTrigger>
+              <TabsTrigger value="revenue" className="flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                <span>Intäkter</span>
+              </TabsTrigger>
+              <TabsTrigger value="promotions" className="flex items-center gap-2">
+                <Percent className="h-4 w-4" />
+                <span>Kampanjer</span>
               </TabsTrigger>
             </TabsList>
 
@@ -129,6 +165,26 @@ const DashboardPage = () => {
                   <p className="text-muted-foreground">Välj ett hotell från fliken 'Mina Hotell' och klicka på 'Hantera Rum' för att se och redigera rummen.</p>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="services">
+              <HotelServices hotel={selectedHotel} />
+            </TabsContent>
+
+            <TabsContent value="messages">
+              <GuestMessages hotel={selectedHotel} />
+            </TabsContent>
+
+            <TabsContent value="reviews">
+              <ReviewsManagement hotel={selectedHotel} />
+            </TabsContent>
+
+            <TabsContent value="revenue">
+              <RevenueReports hotel={selectedHotel} />
+            </TabsContent>
+
+            <TabsContent value="promotions">
+              <PromotionsManagement hotel={selectedHotel} />
             </TabsContent>
           </Tabs>
         </div>
