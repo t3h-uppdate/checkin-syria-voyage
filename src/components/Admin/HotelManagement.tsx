@@ -69,6 +69,16 @@ type Hotel = {
   owner_id: string;
   created_at: string;
   status?: 'active' | 'pending' | 'suspended';
+  address: string;
+  amenities: string[];
+  description: string;
+  email: string;
+  featured_image: string;
+  images: string[];
+  latitude: number;
+  longitude: number;
+  phone_number: string;
+  website: string | null;
 };
 
 const HotelManagement = () => {
@@ -100,7 +110,7 @@ const HotelManagement = () => {
       // Add status for demonstration purposes
       const hotelsWithStatus = data.map(hotel => ({
         ...hotel,
-        status: Math.random() < 0.7 ? 'active' : Math.random() < 0.85 ? 'pending' : 'suspended'
+        status: Math.random() < 0.7 ? 'active' as const : Math.random() < 0.85 ? 'pending' as const : 'suspended' as const
       }));
 
       setHotels(hotelsWithStatus);

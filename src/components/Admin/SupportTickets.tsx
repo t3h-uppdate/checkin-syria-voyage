@@ -82,13 +82,13 @@ const mockTickets: SupportTicket[] = Array(15).fill(null).map((_, i) => ({
     {
       id: `reply-${i}-1`,
       message: 'Thank you for contacting us. We are looking into this issue.',
-      sender: 'admin',
+      sender: 'admin' as const,
       created_at: new Date(Date.now() - Math.floor(Math.random() * 2) * 86400000).toISOString(),
     },
     ...(Math.random() > 0.7 ? [{
       id: `reply-${i}-2`,
       message: 'I still have the same issue, please help.',
-      sender: 'user',
+      sender: 'user' as const,
       created_at: new Date(Date.now() - Math.floor(Math.random() * 1) * 86400000).toISOString(),
     }] : [])
   ] : [],

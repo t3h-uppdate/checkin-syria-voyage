@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -45,7 +44,7 @@ import {
   Download,
   AlertCircle,
   Info,
-  WarningIcon,
+  AlertTriangle,
   CheckCircle,
   Code,
   RefreshCcw,
@@ -176,7 +175,7 @@ const SystemLogs = () => {
       case 'info':
         return <Info className="h-4 w-4 text-blue-500" />;
       case 'warning':
-        return <WarningIcon className="h-4 w-4 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'debug':
@@ -355,7 +354,7 @@ const SystemLogs = () => {
                     <span>{logs.filter(l => l.level === 'info').length} Info</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <WarningIcon className="h-4 w-4 text-amber-500" />
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
                     <span>{logs.filter(l => l.level === 'warning').length} Warning</span>
                   </div>
                   <div className="flex items-center gap-1">
