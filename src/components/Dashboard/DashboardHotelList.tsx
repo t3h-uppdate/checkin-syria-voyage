@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon, Bed, Star, MapPin } from 'lucide-react'; // Added Bed icon
+import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon, Bed, Star, MapPin } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Hotel as HotelType } from '@/types'; // Import Hotel type
+import { Hotel as HotelType } from '@/types';
 import EditHotelForm from './EditHotelForm';
 
 interface DashboardHotelListProps {
@@ -23,14 +23,18 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['owner-hotels', user?.id],
     queryFn: async () => {
+      if (!user?.id) throw new Error('User not authenticated');
+
       const { data: supabaseData, error } = await supabase
         .from('hotels')
-        .select('*') // Select all columns for now
-        .eq('owner_id', user?.id);
+        .select('*')
+        .eq('owner_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching hotels:', error);
+        throw error;
+      }
 
-      // Map Supabase data (snake_case) to Hotel type (camelCase)
       const mappedData: HotelType[] = supabaseData?.map((hotel: any) => ({
         id: hotel.id,
         name: hotel.name,
@@ -38,19 +42,19 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
         address: hotel.address,
         city: hotel.city,
         country: hotel.country,
-        phoneNumber: hotel.phone_number || '', // Add default if missing
+        phoneNumber: hotel.phone_number || '',
         email: hotel.email,
         website: hotel.website,
-        images: hotel.images || [], // Add default if missing
-        rating: hotel.rating || 0, // Add default if missing
-        reviewCount: hotel.review_count || 0, // Add default if missing
-        amenities: hotel.amenities || [], // Add default if missing
-        latitude: hotel.latitude || 0, // Add default if missing
-        longitude: hotel.longitude || 0, // Add default if missing
-        featuredImage: hotel.featured_image || '/placeholder.svg', // Map and add default
-        pricePerNight: hotel.price_per_night || 0, // Map and add default
+        images: hotel.images || [],
+        rating: hotel.rating || 0,
+        reviewCount: hotel.review_count || 0,
+        amenities: hotel.amenities || [],
+        latitude: hotel.latitude || 0,
+        longitude: hotel.longitude || 0,
+        featuredImage: hotel.featured_image || '/placeholder.svg',
+        pricePerNight: hotel.price_per_night || 0,
         featured: hotel.featured,
-        ownerId: hotel.owner_id, // Map
+        ownerId: hotel.owner_id,
       })) || [];
 
       return mappedData;
@@ -63,11 +67,36 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
     }
   });
 
-  const handleUpdateHotel = (updatedHotel: HotelType) => {
-    const updatedHotels = hotels?.map(hotel =>
-      hotel.id === updatedHotel.id ? updatedHotel : hotel
-    ) || [];
-    setHotels(updatedHotels);
+  const handleUpdateHotel = async (updatedHotel: HotelType) => {
+    try {
+      const { error } = await supabase
+        .from('hotels')
+        .update({
+          name: updatedHotel.name,
+          description: updatedHotel.description,
+          address: updatedHotel.address,
+          city: updatedHotel.city,
+          country: updatedHotel.country,
+          phone_number: updatedHotel.phoneNumber,
+          email: updatedHotel.email,
+          website: updatedHotel.website,
+          featured_image: updatedHotel.featuredImage,
+          price_per_night: updatedHotel.pricePerNight,
+          amenities: updatedHotel.amenities,
+        })
+        .eq('id', updatedHotel.id);
+
+      if (error) throw error;
+
+      const updatedHotels = hotels?.map(hotel =>
+        hotel.id === updatedHotel.id ? updatedHotel : hotel
+      ) || [];
+      setHotels(updatedHotels);
+      toast.success('Hotellet har uppdaterats');
+    } catch (error) {
+      console.error('Error updating hotel:', error);
+      toast.error('Kunde inte uppdatera hotellet');
+    }
   };
 
   const handleDeleteHotel = async (hotelId: string) => {

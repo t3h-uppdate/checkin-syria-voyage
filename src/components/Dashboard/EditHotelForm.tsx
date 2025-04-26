@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from "react-hook-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -36,33 +35,15 @@ const EditHotelForm = ({ hotel, onUpdate }: EditHotelFormProps) => {
   const onSubmit = async (data: any) => {
     try {
       setLoading(true);
-      const { error } = await supabase
-        .from('hotels')
-        .update({
-          name: data.name,
-          description: data.description,
-          city: data.city,
-          country: data.country,
-          phone_number: data.phoneNumber,
-          email: data.email,
-          website: data.website,
-          price_per_night: data.pricePerNight,
-          featured_image: data.featuredImage
-        })
-        .eq('id', hotel.id);
-
-      if (error) throw error;
-
-      const updatedHotel = {
+      
+      await onUpdate({
         ...hotel,
         ...data,
         phoneNumber: data.phoneNumber,
         pricePerNight: data.pricePerNight,
         featuredImage: data.featuredImage
-      };
+      });
 
-      onUpdate(updatedHotel);
-      
       toast({
         title: "Hotell uppdaterat",
         description: "Dina ändringar har sparats.",
