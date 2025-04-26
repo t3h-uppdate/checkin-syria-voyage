@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -55,9 +56,11 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       return mappedData;
     },
     enabled: !!user?.id,
-    onSuccess: (data) => {
-      setHotels(data);
-    },
+    meta: {
+      onSuccess: (data) => {
+        setHotels(data);
+      }
+    }
   });
 
   const handleUpdateHotel = (updatedHotel: HotelType) => {
