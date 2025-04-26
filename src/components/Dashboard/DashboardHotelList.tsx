@@ -1,23 +1,25 @@
-
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon, Bed } from 'lucide-react'; // Added Bed icon
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon, Bed, Star, MapPin } from 'lucide-react'; // Added Bed icon
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Hotel } from '@/types'; // Import Hotel type
+import { Hotel as HotelType } from '@/types'; // Import Hotel type
+import EditHotelForm from './EditHotelForm';
 
 interface DashboardHotelListProps {
-  onSelectHotelForRooms: (hotel: Hotel) => void;
+  onSelectHotelForRooms: (hotel: HotelType) => void;
 }
 
 const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelForRooms }) => {
   const { user } = useAuth();
+  const [hotels, setHotels] = useState<HotelType[] | null>(null);
 
-  const { data: hotels, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['owner-hotels', user?.id],
     queryFn: async () => {
       const { data: supabaseData, error } = await supabase
@@ -28,7 +30,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       if (error) throw error;
 
       // Map Supabase data (snake_case) to Hotel type (camelCase)
-      const mappedData: Hotel[] = supabaseData?.map((hotel: any) => ({
+      const mappedData: HotelType[] = supabaseData?.map((hotel: any) => ({
         id: hotel.id,
         name: hotel.name,
         description: hotel.description,
@@ -53,7 +55,17 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       return mappedData;
     },
     enabled: !!user?.id,
+    onSuccess: (data) => {
+      setHotels(data);
+    },
   });
+
+  const handleUpdateHotel = (updatedHotel: HotelType) => {
+    const updatedHotels = hotels?.map(hotel =>
+      hotel.id === updatedHotel.id ? updatedHotel : hotel
+    ) || [];
+    setHotels(updatedHotels);
+  };
 
   const handleDeleteHotel = async (hotelId: string) => {
     try {
@@ -124,11 +136,11 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {hotels.map((hotel) => (
+        {hotels?.map((hotel) => (
           <Card key={hotel.id} className="overflow-hidden">
             <div className="h-48 overflow-hidden">
               <img
-                src={hotel.featuredImage || '/placeholder.svg'} // Use camelCase
+                src={hotel.featuredImage || '/placeholder.svg'}
                 alt={hotel.name}
                 className="w-full h-full object-cover transition-transform hover:scale-105"
               />
@@ -137,75 +149,25 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle>{hotel.name}</CardTitle>
-                  <CardDescription>{hotel.city}, {hotel.country}</CardDescription>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{hotel.city}, {hotel.country}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center text-yellow-500">
-                    <span>★</span>
+                    <Star className="h-4 w-4" />
                     <span className="ml-1 text-sm">{hotel.rating.toFixed(1)}</span>
                   </div>
                   <div className="text-sm font-medium">
-                    {hotel.pricePerNight} kr {/* Use camelCase */}
+                    {hotel.pricePerNight} kr
                   </div>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground line-clamp-2">{hotel.description}</p>
+              <EditHotelForm hotel={hotel} onUpdate={handleUpdateHotel} />
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={`/dashboard/hotels/${hotel.id}/edit`} className="flex items-center gap-1">
-                    <Edit className="h-4 w-4" />
-                    <span>Redigera</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={`/dashboard/hotels/${hotel.id}/stats`} className="flex items-center gap-1">
-                    <BarChart className="h-4 w-4" />
-                    <span>Statistik</span>
-                  </Link>
-                </Button>
-                {/* Add Manage Rooms Button */}
-                <Button variant="outline" size="sm" onClick={() => onSelectHotelForRooms(hotel)} className="flex items-center gap-1">
-                  <Bed className="h-4 w-4" />
-                  <span>Hantera Rum</span>
-                </Button>
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={`/hotels/${hotel.id}`} className="flex items-center gap-1">
-                    <Eye className="h-4 w-4" />
-                    <span>Visa</span>
-                  </Link>
-                </Button>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" className="flex items-center gap-1">
-                      <Trash2 className="h-4 w-4" />
-                      <span>Ta bort</span>
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Är du säker?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Detta kommer permanent ta bort {hotel.name} och all dess data. Denna åtgärd kan inte ångras.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteHotel(hotel.id)}>
-                        Ta bort
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardFooter>
           </Card>
         ))}
       </div>
