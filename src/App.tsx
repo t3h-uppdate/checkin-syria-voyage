@@ -12,7 +12,6 @@ import BookingPage from "./pages/BookingPage";
 import BookingConfirmationPage from "./pages/BookingConfirmationPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
 import GuestProfilePage from "./pages/GuestProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -21,6 +20,18 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+
+// Dashboard pages
+import DashboardOverviewPage from "./pages/Dashboard/DashboardOverviewPage";
+import DashboardHotelsPage from "./pages/Dashboard/HotelsPage";
+import DashboardRoomsPage from "./pages/Dashboard/RoomsPage";
+import DashboardBookingsPage from "./pages/Dashboard/BookingsPage";
+import DashboardServicesPage from "./pages/Dashboard/ServicesPage";
+import DashboardMessagesPage from "./pages/Dashboard/MessagesPage";
+import DashboardReviewsPage from "./pages/Dashboard/ReviewsPage";
+import DashboardRevenuePage from "./pages/Dashboard/RevenuePage";
+import DashboardPromotionsPage from "./pages/Dashboard/PromotionsPage";
+import DashboardSettingsPage from "./pages/Dashboard/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +51,19 @@ const App = () => (
               <Route path="/confirmation/:bookingId" element={<BookingConfirmationPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
+              
+              {/* Dashboard Routes */}
+              <Route path="/dashboard" element={<DashboardOverviewPage />} />
+              <Route path="/dashboard/hotels" element={<DashboardHotelsPage />} />
+              <Route path="/dashboard/rooms" element={<DashboardRoomsPage />} />
+              <Route path="/dashboard/bookings" element={<DashboardBookingsPage />} />
+              <Route path="/dashboard/services" element={<DashboardServicesPage />} />
+              <Route path="/dashboard/messages" element={<DashboardMessagesPage />} />
+              <Route path="/dashboard/reviews" element={<DashboardReviewsPage />} />
+              <Route path="/dashboard/revenue" element={<DashboardRevenuePage />} />
+              <Route path="/dashboard/promotions" element={<DashboardPromotionsPage />} />
+              <Route path="/dashboard/settings" element={<DashboardSettingsPage />} />
+              
               <Route path="/admin-dashboard" element={<AdminControlPanelPage />} />
               <Route path="/admin-control-panel" element={<AdminControlPanelPage />} />
               <Route path="/guest/:userId" element={<GuestProfilePage />} />
