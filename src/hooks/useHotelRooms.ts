@@ -15,7 +15,8 @@ export const useHotelRooms = (hotelId: string) => {
         const { data, error } = await supabase
           .from('rooms')
           .select('*')
-          .eq('hotel_id', hotelId);
+          .eq('hotel_id', hotelId)
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching hotel rooms:', error);
@@ -43,5 +44,6 @@ export const useHotelRooms = (hotelId: string) => {
       }
     },
     enabled: !!hotelId,
+    refetchOnWindowFocus: false,
   });
 };

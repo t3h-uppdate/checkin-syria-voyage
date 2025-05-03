@@ -3,7 +3,7 @@ import React from 'react';
 import { Room } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bed, Ruler, Image as ImageIcon } from 'lucide-react';
+import { Bed, Ruler, Image as ImageIcon, Users, Calendar } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -11,6 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { format } from 'date-fns';
 
 interface RoomDetailsProps {
   room: Room;
@@ -57,59 +58,91 @@ export function RoomDetails({ room }: RoomDetailsProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h3 className="text-2xl font-semibold">{room.name}</h3>
-          <div className="mt-2 space-y-3">
+          <div className="mt-4 flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-muted/30">
+                <CardContent className="flex items-center gap-2 p-4">
+                  <div className="rounded-full bg-primary/20 p-2">
+                    <Users className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Capacity</p>
+                    <p className="font-medium">{room.capacity} guests</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-muted/30">
+                <CardContent className="flex items-center gap-2 p-4">
+                  <div className="rounded-full bg-primary/20 p-2">
+                    <Bed className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Bed Type</p>
+                    <p className="font-medium">{room.bedType}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-muted/30">
+                <CardContent className="flex items-center gap-2 p-4">
+                  <div className="rounded-full bg-primary/20 p-2">
+                    <Ruler className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Room Size</p>
+                    <p className="font-medium">{room.size} m²</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-muted/30">
+                <CardContent className="flex items-center gap-2 p-4">
+                  <div className="rounded-full bg-primary/20 p-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Added</p>
+                    <p className="font-medium">{room.createdAt ? format(new Date(room.createdAt), 'MMM d, yyyy') : 'N/A'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Price per night:</span>
-              <span className="font-medium">{room.price} kr</span>
+              <span className="font-medium text-lg">{room.price} kr</span>
             </div>
+            
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Status:</span>
-              <Badge variant={room.available ? "default" : "destructive"}>
+              <Badge variant={room.available ? "default" : "destructive"} className="text-sm">
                 {room.available ? 'Available' : 'Not Available'}
               </Badge>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Capacity:</span>
-              <span>{room.capacity} guests</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Bed Type:</span>
-              <div className="flex items-center gap-1">
-                <Bed className="h-4 w-4" />
-                <span>{room.bedType}</span>
-              </div>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Room Size:</span>
-              <div className="flex items-center gap-1">
-                <Ruler className="h-4 w-4" />
-                <span>{room.size} m²</span>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Room Description */}
         <div>
-          <h4 className="font-medium mb-2">Description</h4>
-          <p className="text-sm text-muted-foreground">{room.description}</p>
-        </div>
-      </div>
-
-      {/* Room Amenities */}
-      <div>
-        <h4 className="font-medium mb-3">Amenities</h4>
-        {room.amenities && room.amenities.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {room.amenities.map((amenity, index) => (
-              <Badge key={index} variant="outline">
-                {amenity}
-              </Badge>
-            ))}
+          <h4 className="font-medium mb-3">Description</h4>
+          <div className="bg-muted/30 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground">{room.description}</p>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No amenities listed</p>
-        )}
+
+          {/* Room Amenities */}
+          <div className="mt-6">
+            <h4 className="font-medium mb-3">Amenities</h4>
+            {room.amenities && room.amenities.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {room.amenities.map((amenity, index) => (
+                  <Badge key={index} variant="outline" className="py-1 px-2">
+                    {amenity}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No amenities listed</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
