@@ -1,7 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon, Bed, Star, MapPin } from 'lucide-react';
@@ -11,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Hotel as HotelType } from '@/types';
 import EditHotelForm from './EditHotelForm';
+import DashboardEmpty from './DashboardEmpty';
 
 interface DashboardHotelListProps {
   onSelectHotelForRooms: (hotel: HotelType) => void;
@@ -19,53 +19,68 @@ interface DashboardHotelListProps {
 const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelForRooms }) => {
   const { user } = useAuth();
   const [hotels, setHotels] = useState<HotelType[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['owner-hotels', user?.id],
-    queryFn: async () => {
-      if (!user?.id) throw new Error('User not authenticated');
-
-      const { data: supabaseData, error } = await supabase
-        .from('hotels')
-        .select('*')
-        .eq('owner_id', user.id);
-
-      if (error) {
-        console.error('Error fetching hotels:', error);
-        throw error;
+  // Fetch hotels directly when component mounts or user changes
+  useEffect(() => {
+    const fetchHotels = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
       }
 
-      const mappedData: HotelType[] = supabaseData?.map((hotel: any) => ({
-        id: hotel.id,
-        name: hotel.name,
-        description: hotel.description,
-        address: hotel.address,
-        city: hotel.city,
-        country: hotel.country,
-        phoneNumber: hotel.phone_number || '',
-        email: hotel.email,
-        website: hotel.website,
-        images: hotel.images || [],
-        rating: hotel.rating || 0,
-        reviewCount: hotel.review_count || 0,
-        amenities: hotel.amenities || [],
-        latitude: hotel.latitude || 0,
-        longitude: hotel.longitude || 0,
-        featuredImage: hotel.featured_image || '/placeholder.svg',
-        pricePerNight: hotel.price_per_night || 0,
-        featured: hotel.featured,
-        ownerId: hotel.owner_id,
-      })) || [];
+      try {
+        setLoading(true);
+        console.log("Fetching hotels for user ID:", user.id);
+        
+        const { data: supabaseData, error } = await supabase
+          .from('hotels')
+          .select('*')
+          .eq('owner_id', user.id);
 
-      return mappedData;
-    },
-    enabled: !!user?.id,
-    meta: {
-      onSuccess: (data) => {
-        setHotels(data);
+        if (error) {
+          console.error('Error fetching hotels:', error);
+          setError(error.message);
+          toast.error('Kunde inte hämta hotell. Försök igen senare.');
+          return;
+        }
+
+        console.log("Hotels fetched:", supabaseData);
+        
+        const mappedData: HotelType[] = supabaseData?.map((hotel: any) => ({
+          id: hotel.id,
+          name: hotel.name,
+          description: hotel.description,
+          address: hotel.address || '',
+          city: hotel.city,
+          country: hotel.country,
+          phoneNumber: hotel.phone_number || '',
+          email: hotel.email,
+          website: hotel.website,
+          images: hotel.images || [],
+          rating: hotel.rating || 0,
+          reviewCount: hotel.review_count || 0,
+          amenities: hotel.amenities || [],
+          latitude: hotel.latitude || 0,
+          longitude: hotel.longitude || 0,
+          featuredImage: hotel.featured_image || '/placeholder.svg',
+          pricePerNight: hotel.price_per_night || 0,
+          featured: hotel.featured || false,
+          ownerId: hotel.owner_id,
+        })) || [];
+
+        setHotels(mappedData);
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        setError('Ett oväntat fel uppstod');
+      } finally {
+        setLoading(false);
       }
-    }
-  });
+    };
+
+    fetchHotels();
+  }, [user?.id]);
 
   const handleUpdateHotel = async (updatedHotel: HotelType) => {
     try {
@@ -91,6 +106,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       const updatedHotels = hotels?.map(hotel =>
         hotel.id === updatedHotel.id ? updatedHotel : hotel
       ) || [];
+      
       setHotels(updatedHotels);
       toast.success('Hotellet har uppdaterats');
     } catch (error) {
@@ -108,7 +124,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
 
       if (error) throw error;
 
-      refetch();
+      setHotels(hotels?.filter(hotel => hotel.id !== hotelId) || []);
       toast.success('Hotellet har tagits bort');
     } catch (error) {
       console.error('Error deleting hotel:', error);
@@ -116,7 +132,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -133,23 +149,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
   }
 
   if (!hotels?.length) {
-    return (
-      <div className="text-center py-16 px-4 bg-muted/50 rounded-lg border-2 border-dashed border-muted">
-        <div className="mx-auto w-16 h-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
-          <HotelIcon className="h-8 w-8 text-primary" />
-        </div>
-        <h3 className="text-xl font-medium mb-2">Välkommen till din hotellportal</h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          Börja genom att lägga till ditt första hotell. Här kan du hantera alla dina hotell, bokningar och gästinformation på ett enkelt sätt.
-        </p>
-        <Button asChild size="lg" className="gap-2">
-          <Link to="/dashboard/hotels/new">
-            <PlusCircle className="h-5 w-5" />
-            <span>Lägg till ditt första hotell</span>
-          </Link>
-        </Button>
-      </div>
-    );
+    return <DashboardEmpty />;
   }
 
   return (
@@ -168,7 +168,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {hotels?.map((hotel) => (
+        {hotels.map((hotel) => (
           <Card key={hotel.id} className="overflow-hidden">
             <div className="h-48 overflow-hidden">
               <img
@@ -198,7 +198,44 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
               </div>
             </CardHeader>
             <CardContent>
-              <EditHotelForm hotel={hotel} onUpdate={handleUpdateHotel} />
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline"
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => onSelectHotelForRooms(hotel)}
+                  >
+                    <Bed className="h-4 w-4" />
+                    <span>Hantera Rum</span>
+                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="flex items-center gap-1">
+                        <Trash2 className="h-4 w-4" />
+                        <span>Ta bort</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Ta bort hotell</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Är du säker på att du vill ta bort "{hotel.name}"? Denna åtgärd kan inte ångras.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteHotel(hotel.id)}>
+                          Ta bort
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+                
+                <EditHotelForm hotel={hotel} onUpdate={handleUpdateHotel} />
+              </div>
             </CardContent>
           </Card>
         ))}

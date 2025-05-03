@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from "react-hook-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -8,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Hotel } from "@/types";
 import { Edit, Image, Phone, Mail, Globe, MapPin } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface EditHotelFormProps {
   hotel: Hotel;
@@ -28,7 +28,8 @@ const EditHotelForm = ({ hotel, onUpdate }: EditHotelFormProps) => {
       email: hotel.email,
       website: hotel.website || '',
       pricePerNight: hotel.pricePerNight,
-      featuredImage: hotel.featuredImage
+      featuredImage: hotel.featuredImage,
+      address: hotel.address || ''
     }
   });
 
@@ -36,9 +37,11 @@ const EditHotelForm = ({ hotel, onUpdate }: EditHotelFormProps) => {
     try {
       setLoading(true);
       
+      // Pass the updated hotel data to the parent component which handles the Supabase update
       await onUpdate({
         ...hotel,
         ...data,
+        address: data.address,
         phoneNumber: data.phoneNumber,
         pricePerNight: data.pricePerNight,
         featuredImage: data.featuredImage
@@ -105,6 +108,17 @@ const EditHotelForm = ({ hotel, onUpdate }: EditHotelFormProps) => {
                 id="country"
                 {...register("country", { required: "Land krävs" })}
               />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address">Adress</Label>
+              <div className="flex">
+                <MapPin className="h-5 w-5 mr-2 text-muted-foreground" />
+                <Input
+                  id="address"
+                  {...register("address")}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
