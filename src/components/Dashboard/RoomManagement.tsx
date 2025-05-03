@@ -285,9 +285,9 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ hotel }) => {
               </div>
               <div className="flex gap-2">
                 <Select 
-                  value={filterAvailable === null ? '' : filterAvailable.toString()}
+                  value={filterAvailable === null ? 'all' : filterAvailable.toString()}
                   onValueChange={(value) => {
-                    if (value === '') setFilterAvailable(null);
+                    if (value === 'all') setFilterAvailable(null);
                     else setFilterAvailable(value === 'true');
                   }}
                 >
@@ -295,7 +295,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ hotel }) => {
                     <SelectValue placeholder="Filter by availability" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All rooms</SelectItem>
+                    <SelectItem value="all">All rooms</SelectItem>
                     <SelectItem value="true">Available</SelectItem>
                     <SelectItem value="false">Unavailable</SelectItem>
                   </SelectContent>
