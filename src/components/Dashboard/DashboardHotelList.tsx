@@ -9,8 +9,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Hotel as HotelType } from '@/types';
 import EditHotelForm from './EditHotelForm';
 import DashboardEmpty from './DashboardEmpty';
-import { Bed, Edit, Eye, Loader2, MapPin, Star, Trash2 } from 'lucide-react';
+import { Bed, Loader2, MapPin, Star, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useHotels } from '@/hooks/useHotels';
 
 interface DashboardHotelListProps {
   onSelectHotelForRooms: (hotel: HotelType) => void;
@@ -18,72 +19,12 @@ interface DashboardHotelListProps {
 
 const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelForRooms }) => {
   const { user } = useAuth();
-  const [hotels, setHotels] = useState<HotelType[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch hotels directly when component mounts or user changes
-  useEffect(() => {
-    const fetchHotels = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        console.log("Fetching hotels for user ID:", user.id);
-        
-        const { data: supabaseData, error } = await supabase
-          .from('hotels')
-          .select('*')
-          .eq('owner_id', user.id);
-
-        if (error) {
-          console.error('Error fetching hotels:', error);
-          setError(error.message);
-          toast.error('Could not fetch hotels. Please try again later.');
-          return;
-        }
-
-        console.log("Hotels fetched:", supabaseData);
-        
-        const mappedData: HotelType[] = supabaseData?.map((hotel: any) => ({
-          id: hotel.id,
-          name: hotel.name,
-          description: hotel.description,
-          address: hotel.address || '',
-          city: hotel.city,
-          country: hotel.country,
-          phoneNumber: hotel.phone_number || '',
-          email: hotel.email,
-          website: hotel.website,
-          images: hotel.images || [],
-          rating: hotel.rating || 0,
-          reviewCount: hotel.review_count || 0,
-          amenities: hotel.amenities || [],
-          latitude: hotel.latitude || 0,
-          longitude: hotel.longitude || 0,
-          featuredImage: hotel.featured_image || '/placeholder.svg',
-          pricePerNight: hotel.price_per_night || 0,
-          featured: hotel.featured || false,
-          ownerId: hotel.owner_id,
-        })) || [];
-
-        setHotels(mappedData);
-      } catch (err) {
-        console.error('Unexpected error:', err);
-        setError('An unexpected error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHotels();
-  }, [user?.id]);
+  const { data: hotels, isLoading, isError } = useHotels({ ownerId: user?.id });
+  const [loading, setLoading] = useState(false);
 
   const handleUpdateHotel = async (updatedHotel: HotelType) => {
     try {
+      setLoading(true);
       const { error } = await supabase
         .from('hotels')
         .update({
@@ -102,37 +43,35 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
         .eq('id', updatedHotel.id);
 
       if (error) throw error;
-
-      const updatedHotels = hotels?.map(hotel =>
-        hotel.id === updatedHotel.id ? updatedHotel : hotel
-      ) || [];
       
-      setHotels(updatedHotels);
-      toast.success('Hotel has been updated');
+      toast.success('Hotel has been updated successfully');
     } catch (error) {
       console.error('Error updating hotel:', error);
       toast.error('Could not update hotel');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteHotel = async (hotelId: string) => {
     try {
+      setLoading(true);
       const { error } = await supabase
         .from('hotels')
         .delete()
         .eq('id', hotelId);
 
       if (error) throw error;
-
-      setHotels(hotels?.filter(hotel => hotel.id !== hotelId) || []);
-      toast.success('Hotel has been removed');
+      toast.success('Hotel has been removed successfully');
     } catch (error) {
       console.error('Error deleting hotel:', error);
       toast.error('Could not remove hotel');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  if (isLoading || loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -140,7 +79,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="text-center text-red-500 py-8 bg-red-50 rounded-lg border border-red-200">
         <p className="font-medium">An error occurred while fetching hotels</p>
@@ -165,15 +104,15 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
 
   return (
     <div>
-      <Card className="mb-6 shadow-md">
-        <CardHeader className="bg-muted/40">
+      <Card className="shadow-md overflow-hidden">
+        <CardHeader className="bg-muted/40 border-b">
           <CardTitle>My Hotels</CardTitle>
           <CardDescription>Manage your hotel properties</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-1 gap-px bg-border">
+          <div className="divide-y">
             {hotels.map((hotel) => (
-              <div key={hotel.id} className="bg-card p-4 lg:p-6">
+              <div key={hotel.id} className="p-4 md:p-6 hover:bg-muted/20 transition-colors">
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* Hotel Image */}
                   <div className="md:w-1/4 h-48 overflow-hidden rounded-lg">
@@ -181,6 +120,10 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
                       src={hotel.featuredImage || '/placeholder.svg'}
                       alt={hotel.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.svg';
+                      }}
                     />
                   </div>
                   
@@ -201,7 +144,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
                       </Badge>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{hotel.description}</p>
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-3">{hotel.description}</p>
                     
                     <div className="flex flex-wrap gap-1 mt-1">
                       {hotel.amenities.slice(0, 3).map((amenity, idx) => (
@@ -220,7 +163,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
                   {/* Actions */}
                   <div className="md:w-1/4 flex flex-col justify-center gap-2">
                     <Button 
-                      variant="outline"
+                      variant="default"
                       size="sm" 
                       className="w-full flex items-center justify-center gap-2"
                       onClick={() => onSelectHotelForRooms(hotel)}
