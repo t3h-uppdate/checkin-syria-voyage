@@ -156,9 +156,18 @@ const RoomTableView = ({
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="outline">Cancel</Button>
-                        </DialogClose>
+                        <Button variant="outline" onClick={e => {
+                          // Find the closest dialog and close it
+                          const dialog = (e.target as HTMLElement).closest('[data-state]');
+                          if (dialog) {
+                            const closeButton = dialog.querySelector('[data-dismiss]');
+                            if (closeButton) {
+                              (closeButton as HTMLButtonElement).click();
+                            }
+                          }
+                        }}>
+                          Cancel
+                        </Button>
                         <Button 
                           variant="destructive" 
                           onClick={() => handleDelete(room.id)}
