@@ -1,8 +1,7 @@
+
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, PlusCircle, Trash2, BarChart, Loader2, Hotel as HotelIcon, Bed, Star, MapPin } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Hotel as HotelType } from '@/types';
 import EditHotelForm from './EditHotelForm';
 import DashboardEmpty from './DashboardEmpty';
+import { Bed, Edit, Eye, Loader2, MapPin, Star, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface DashboardHotelListProps {
   onSelectHotelForRooms: (hotel: HotelType) => void;
@@ -41,7 +42,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
         if (error) {
           console.error('Error fetching hotels:', error);
           setError(error.message);
-          toast.error('Kunde inte hämta hotell. Försök igen senare.');
+          toast.error('Could not fetch hotels. Please try again later.');
           return;
         }
 
@@ -72,7 +73,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
         setHotels(mappedData);
       } catch (err) {
         console.error('Unexpected error:', err);
-        setError('Ett oväntat fel uppstod');
+        setError('An unexpected error occurred');
       } finally {
         setLoading(false);
       }
@@ -107,10 +108,10 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       ) || [];
       
       setHotels(updatedHotels);
-      toast.success('Hotellet har uppdaterats');
+      toast.success('Hotel has been updated');
     } catch (error) {
       console.error('Error updating hotel:', error);
-      toast.error('Kunde inte uppdatera hotellet');
+      toast.error('Could not update hotel');
     }
   };
 
@@ -124,10 +125,10 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
       if (error) throw error;
 
       setHotels(hotels?.filter(hotel => hotel.id !== hotelId) || []);
-      toast.success('Hotellet har tagits bort');
+      toast.success('Hotel has been removed');
     } catch (error) {
       console.error('Error deleting hotel:', error);
-      toast.error('Kunde inte ta bort hotellet');
+      toast.error('Could not remove hotel');
     }
   };
 
@@ -141,104 +142,124 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
 
   if (error) {
     return (
-      <div className="text-center text-red-500 py-8">
-        Ett fel uppstod när hotellen skulle hämtas. Försök igen senare.
+      <div className="text-center text-red-500 py-8 bg-red-50 rounded-lg border border-red-200">
+        <p className="font-medium">An error occurred while fetching hotels</p>
+        <p className="text-sm">Please try again later</p>
       </div>
     );
   }
 
   if (!hotels?.length) {
-    return <DashboardEmpty />;
+    return (
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>My Hotels</CardTitle>
+          <CardDescription>You don't have any hotels assigned to you yet</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DashboardEmpty />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold">Dina Hotell</h2>
-          <p className="text-muted-foreground">Hantera alla dina hotell från en plats</p>
-        </div>
-        <Button asChild>
-          <Link to="/dashboard/hotels/new" className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            <span>Lägg till nytt hotell</span>
-          </Link>
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {hotels.map((hotel) => (
-          <Card key={hotel.id} className="overflow-hidden">
-            <div className="h-48 overflow-hidden">
-              <img
-                src={hotel.featuredImage || '/placeholder.svg'}
-                alt={hotel.name}
-                className="w-full h-full object-cover transition-transform hover:scale-105"
-              />
-            </div>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{hotel.name}</CardTitle>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{hotel.city}, {hotel.country}</span>
+      <Card className="mb-6 shadow-md">
+        <CardHeader className="bg-muted/40">
+          <CardTitle>My Hotels</CardTitle>
+          <CardDescription>Manage your hotel properties</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="grid grid-cols-1 gap-px bg-border">
+            {hotels.map((hotel) => (
+              <div key={hotel.id} className="bg-card p-4 lg:p-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Hotel Image */}
+                  <div className="md:w-1/4 h-48 overflow-hidden rounded-lg">
+                    <img
+                      src={hotel.featuredImage || '/placeholder.svg'}
+                      alt={hotel.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center text-yellow-500">
-                    <Star className="h-4 w-4" />
-                    <span className="ml-1 text-sm">{hotel.rating.toFixed(1)}</span>
-                  </div>
-                  <div className="text-sm font-medium">
-                    {hotel.pricePerNight} kr
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <Button 
-                    variant="outline"
-                    size="sm" 
-                    className="flex items-center gap-1"
-                    onClick={() => onSelectHotelForRooms(hotel)}
-                  >
-                    <Bed className="h-4 w-4" />
-                    <span>Hantera Rum</span>
-                  </Button>
                   
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="flex items-center gap-1">
-                        <Trash2 className="h-4 w-4" />
-                        <span>Ta bort</span>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Ta bort hotell</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Är du säker på att du vill ta bort "{hotel.name}"? Denna åtgärd kan inte ångras.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteHotel(hotel.id)}>
-                          Ta bort
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {/* Hotel Details */}
+                  <div className="md:w-2/4 flex flex-col">
+                    <h3 className="text-xl font-semibold mb-2">{hotel.name}</h3>
+                    <div className="flex items-center gap-1 text-muted-foreground mb-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{hotel.city}, {hotel.country}</span>
+                    </div>
+                    
+                    <div className="flex items-center mb-2">
+                      <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                      <span className="ml-1 text-sm">{hotel.rating.toFixed(1)}</span>
+                      <span className="ml-1 text-xs text-muted-foreground">({hotel.reviewCount} reviews)</span>
+                      <Badge variant="outline" className="ml-2 bg-muted/50">
+                        ${hotel.pricePerNight}/night
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{hotel.description}</p>
+                    
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {hotel.amenities.slice(0, 3).map((amenity, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {amenity}
+                        </Badge>
+                      ))}
+                      {hotel.amenities.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{hotel.amenities.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="md:w-1/4 flex flex-col justify-center gap-2">
+                    <Button 
+                      variant="outline"
+                      size="sm" 
+                      className="w-full flex items-center justify-center gap-2"
+                      onClick={() => onSelectHotelForRooms(hotel)}
+                    >
+                      <Bed className="h-4 w-4" />
+                      <span>Manage Rooms</span>
+                    </Button>
+                    
+                    <EditHotelForm hotel={hotel} onUpdate={handleUpdateHotel} />
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="w-full flex items-center justify-center gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          <span>Remove</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove Hotel</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to remove "{hotel.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteHotel(hotel.id)}>
+                            Remove
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-                
-                <EditHotelForm hotel={hotel} onUpdate={handleUpdateHotel} />
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
