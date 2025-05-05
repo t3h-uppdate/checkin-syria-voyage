@@ -1,95 +1,169 @@
 
 import React, { useState, useEffect } from 'react';
-import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
-import { Hotel } from '@/types';
+import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import RoomManagement from '@/components/Dashboard/RoomManagement';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Hotel as HotelIcon, LayoutDashboard } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { Hotel } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/sonner';
 
 export default function DashboardRoomsPage() {
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const navigate = useNavigate();
   
+  // Try to get the selected hotel from session storage first
   useEffect(() => {
-    // Get the selected hotel from session storage
-    const hotelJson = sessionStorage.getItem('selectedHotel');
-    if (hotelJson) {
+    const storedHotel = sessionStorage.getItem('selectedHotel');
+    
+    if (storedHotel) {
       try {
-        setSelectedHotel(JSON.parse(hotelJson));
+        const hotel = JSON.parse(storedHotel);
+        // Verify this hotel belongs to the current user
+        if (hotel.ownerId === user?.id) {
+          setSelectedHotel(hotel);
+        } else {
+          sessionStorage.removeItem('selectedHotel');
+        }
       } catch (e) {
-        toast.error('Failed to load hotel information');
-        navigate('/dashboard/hotels');
+        console.error('Error parsing stored hotel:', e);
+        sessionStorage.removeItem('selectedHotel');
       }
-    } else {
-      // If no hotel is selected, redirect to hotels page
-      toast.error('Please select a hotel first');
-      navigate('/dashboard/hotels');
     }
-  }, [navigate]);
+  }, [user?.id]);
+  
+  // Fetch all hotels owned by the current user
+  useEffect(() => {
+    const fetchHotels = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('hotels')
+          .select('*')
+          .eq('owner_id', user.id);
+          
+        if (error) throw error;
+        
+        const mappedHotels = data.map(hotel => ({
+          id: hotel.id,
+          name: hotel.name,
+          description: hotel.description,
+          address: hotel.address || '',
+          city: hotel.city,
+          country: hotel.country,
+          phoneNumber: hotel.phone_number || '',
+          email: hotel.email,
+          website: hotel.website,
+          images: hotel.images || [],
+          rating: hotel.rating || 0,
+          reviewCount: hotel.review_count || 0,
+          amenities: hotel.amenities || [],
+          latitude: hotel.latitude || 0,
+          longitude: hotel.longitude || 0,
+          featuredImage: hotel.featured_image || '/placeholder.svg',
+          pricePerNight: hotel.price_per_night || 0,
+          featured: hotel.featured || false,
+          ownerId: hotel.owner_id
+        }));
+        
+        setHotels(mappedHotels);
+        
+        // If we don't have a selected hotel yet, select the first one
+        if (!selectedHotel && mappedHotels.length > 0) {
+          setSelectedHotel(mappedHotels[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+        toast.error('Failed to load hotels');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHotels();
+  }, [user?.id, selectedHotel]);
+  
+  const handleHotelChange = (hotelId: string) => {
+    const hotel = hotels.find(h => h.id === hotelId);
+    if (hotel) {
+      setSelectedHotel(hotel);
+      sessionStorage.setItem('selectedHotel', JSON.stringify(hotel));
+    }
+  };
+  
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="py-6 flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (hotels.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="py-6">
+          <h1 className="text-2xl font-bold mb-6">Room Management</h1>
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="mb-4">You don't have any hotels yet. Please add a hotel before managing rooms.</p>
+              <button 
+                className="text-primary hover:underline" 
+                onClick={() => navigate('/dashboard/hotels')}
+              >
+                Go to Hotels
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
   
   return (
     <DashboardLayout>
-      <div className="py-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="mb-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/dashboard/hotels')}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Hotels
-              </Button>
-            </div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <HotelIcon className="h-7 w-7 text-primary" />
-              Room Management
-              {selectedHotel && (
-                <span className="text-xl font-normal text-muted-foreground">
-                  for {selectedHotel.name}
-                </span>
-              )}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your hotel rooms, add new rooms, and update their availability
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/dashboard')} 
-              className="flex items-center gap-2"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Dashboard
-            </Button>
-          </div>
-        </div>
-
-        {selectedHotel ? (
-          <RoomManagement hotel={selectedHotel} />
-        ) : (
-          <Card>
-            <CardContent className="text-center py-12">
-              <div className="mx-auto rounded-full bg-primary/10 w-16 h-16 flex items-center justify-center mb-4">
-                <HotelIcon className="h-8 w-8 text-primary" />
+      <div className="py-6">
+        <h1 className="text-2xl font-bold mb-6">Room Management</h1>
+        
+        {/* Hotel Selector */}
+        {hotels.length > 1 && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="font-medium">Select Hotel:</div>
+                <Select
+                  value={selectedHotel?.id}
+                  onValueChange={handleHotelChange}
+                >
+                  <SelectTrigger className="w-full max-w-xs">
+                    <SelectValue placeholder="Select Hotel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hotels.map((hotel) => (
+                      <SelectItem key={hotel.id} value={hotel.id}>
+                        {hotel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <h3 className="text-xl font-semibold mb-2">No Hotel Selected</h3>
-              <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                Please select a hotel from the hotels page to manage its rooms.
-              </p>
-              <Button onClick={() => navigate('/dashboard/hotels')}>
-                Go to Hotels
-              </Button>
             </CardContent>
           </Card>
         )}
+        
+        {selectedHotel && <RoomManagement hotel={selectedHotel} />}
       </div>
     </DashboardLayout>
   );

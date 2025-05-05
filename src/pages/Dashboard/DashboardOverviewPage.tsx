@@ -3,32 +3,73 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Hotel, Bed, Calendar, User } from 'lucide-react';
+import { Hotel as HotelIcon, Bed, Calendar, User } from 'lucide-react';
 import { useHotels } from '@/hooks/useHotels';
 import { toast } from '@/components/ui/sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function DashboardOverviewPage() {
   const { user } = useAuth();
-  const { data: hotels, isLoading, error } = useHotels();
   const [totalRooms, setTotalRooms] = useState(0);
   const [recentBookings, setRecentBookings] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [ownerHotels, setOwnerHotels] = useState([]);
 
   useEffect(() => {
-    if (error) {
-      toast.error("Failed to load dashboard data");
-    }
-  }, [error]);
+    const fetchOwnerHotels = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('hotels')
+          .select('*')
+          .eq('owner_id', user.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        setOwnerHotels(data || []);
+        
+        // Calculate total rooms (in a real app, you might fetch this from the rooms table)
+        const roomsCount = await fetchTotalRooms(data?.map(hotel => hotel.id) || []);
+        setTotalRooms(roomsCount);
+        
+        // Generate a random number of recent bookings for demo
+        // In a real app, fetch from bookings table for these hotels
+        setRecentBookings(Math.floor(Math.random() * 15) + 1);
+      } catch (error) {
+        console.error("Error fetching owner hotels:", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchOwnerHotels();
+  }, [user?.id]);
 
-  // In a real app, these would be actual API calls
-  // For now we'll use mock data
-  useEffect(() => {
-    if (hotels) {
-      // Assume each hotel has about 10 rooms
-      setTotalRooms(hotels.length * 10);
-      // Generate a random number of recent bookings
-      setRecentBookings(Math.floor(Math.random() * 50) + 1);
+  // Function to fetch total rooms for a set of hotels
+  const fetchTotalRooms = async (hotelIds) => {
+    if (hotelIds.length === 0) return 0;
+    
+    try {
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('id')
+        .in('hotel_id', hotelIds);
+        
+      if (error) {
+        throw error;
+      }
+      
+      return data?.length || 0;
+    } catch (error) {
+      console.error("Error fetching rooms count:", error);
+      return 0;
     }
-  }, [hotels]);
+  };
 
   return (
     <DashboardLayout>
@@ -40,12 +81,12 @@ export default function DashboardOverviewPage() {
           <Card className="bg-primary text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Hotel className="h-5 w-5" /> Hotels
+                <HotelIcon className="h-5 w-5" /> Hotels
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {isLoading ? '...' : hotels?.length || 0}
+                {isLoading ? '...' : ownerHotels?.length || 0}
               </div>
             </CardContent>
           </Card>

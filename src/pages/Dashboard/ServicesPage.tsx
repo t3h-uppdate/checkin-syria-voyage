@@ -6,10 +6,20 @@ import HotelServices from '@/components/Dashboard/HotelServices';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useHotels } from '@/hooks/useHotels';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/sonner';
+import { Loader2 } from 'lucide-react';
 
 export default function DashboardServicesPage() {
-  const { data: hotels, isLoading } = useHotels();
+  const { user } = useAuth();
+  const { data: hotels, isLoading, error } = useHotels({ ownerId: user?.id });
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load hotels");
+    }
+  }, [error]);
   
   useEffect(() => {
     if (hotels && hotels.length > 0) {
@@ -21,6 +31,31 @@ export default function DashboardServicesPage() {
     const hotel = hotels?.find(h => h.id === hotelId) || null;
     setSelectedHotel(hotel);
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="py-6 flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (hotels?.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="py-6">
+          <h1 className="text-2xl font-bold mb-6">Service Management</h1>
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p>You don't have any hotels yet. Please add a hotel to manage services.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

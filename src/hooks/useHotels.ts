@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Hotel } from '@/types';
 
-export const useHotels = (options?: { featured?: boolean }) => {
+export const useHotels = (options?: { featured?: boolean; ownerId?: string }) => {
   return useQuery({
     queryKey: ['hotels', options],
     queryFn: async () => {
@@ -12,6 +12,10 @@ export const useHotels = (options?: { featured?: boolean }) => {
         
         if (options?.featured !== undefined) {
           query = query.eq('featured', options.featured);
+        }
+        
+        if (options?.ownerId) {
+          query = query.eq('owner_id', options.ownerId);
         }
         
         const { data, error } = await query;
