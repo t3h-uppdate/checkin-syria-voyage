@@ -60,7 +60,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ hotel }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [filterBedType, setFilterBedType] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
+  const [priceRangeFilter, setPriceRangeFilter] = useState<[number, number] | null>(null);
   const [capacityFilter, setCapacityFilter] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 

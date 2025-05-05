@@ -3,7 +3,7 @@ import React from 'react';
 import { Room } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bed, Ruler, Image as ImageIcon, Users, Calendar } from 'lucide-react';
+import { Bed, Ruler, Image as ImageIcon, Users } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -11,7 +11,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { format } from 'date-fns';
 
 interface RoomDetailsProps {
   room: Room;
@@ -90,17 +89,6 @@ export function RoomDetails({ room }: RoomDetailsProps) {
                   <div>
                     <p className="text-xs text-muted-foreground">Room Size</p>
                     <p className="font-medium">{room.size} m²</p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-muted/30">
-                <CardContent className="flex items-center gap-2 p-4">
-                  <div className="rounded-full bg-primary/20 p-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Added</p>
-                    <p className="font-medium">{room.createdAt ? format(new Date(room.createdAt), 'MMM d, yyyy') : 'N/A'}</p>
                   </div>
                 </CardContent>
               </Card>
