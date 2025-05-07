@@ -1,12 +1,11 @@
-
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Hotel } from "@/types";
-import { Receipt, TrendingUp, Download, Calendar, Clock, ChevronDown, PlusSquare, MinusSquare, ArrowDownUp, ArrowUpRight, ArrowDownRight, Filter } from "lucide-react";
+import { Receipt, TrendingUp, Download, Calendar, Clock, ChevronDown, PlusSquare, MinusSquare, ArrowDownUp, ArrowUpRight, ArrowDownRight, Filter, LineChart, DollarSign, Bed } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import {
-  LineChart,
+  LineChart as RechartsLineChart,
   Line,
   BarChart,
   Bar,
@@ -314,7 +313,7 @@ const RevenueReports = ({ hotel }: RevenueReportsProps) => {
                   <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
                       {chartType === 'line' ? (
-                        <LineChart data={getData()}>
+                        <RechartsLineChart data={getData()}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis />
@@ -329,7 +328,7 @@ const RevenueReports = ({ hotel }: RevenueReportsProps) => {
                             strokeWidth={2}
                             activeDot={{ r: 8 }}
                           />
-                        </LineChart>
+                        </RechartsLineChart>
                       ) : (
                         <BarChart data={getData()}>
                           <CartesianGrid strokeDasharray="3 3" />

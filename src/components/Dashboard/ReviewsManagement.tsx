@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Hotel } from "@/types";
-import { Star, MessageSquare, Search, Filter, ChevronDown, Calendar, AlertCircle, CheckCircle2, User } from "lucide-react";
+import { Star, MessageSquare, Search, Filter, ChevronDown, Calendar, AlertCircle, CheckCircle2, User, Clock } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import {
   DropdownMenu,
