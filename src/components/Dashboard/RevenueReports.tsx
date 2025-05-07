@@ -360,7 +360,7 @@ const RevenueReports = ({ hotel }: RevenueReportsProps) => {
                 <CardContent>
                   <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={getData()}>
+                      <RechartsLineChart data={getData()}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis yAxisId="left" />
@@ -383,7 +383,7 @@ const RevenueReports = ({ hotel }: RevenueReportsProps) => {
                           name="Occupancy (%)"
                           strokeWidth={2}
                         />
-                      </LineChart>
+                      </RechartsLineChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
