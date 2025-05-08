@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/Dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +10,20 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function DashboardOverviewPage() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
+  const navigate = useNavigate();
   const [totalRooms, setTotalRooms] = useState(0);
   const [recentBookings, setRecentBookings] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [ownerHotels, setOwnerHotels] = useState([]);
+
+  // Additional access control check
+  useEffect(() => {
+    if (userRole !== 'owner' && userRole !== 'admin') {
+      toast.error("You don't have permission to access this area");
+      navigate('/');
+    }
+  }, [userRole, navigate]);
 
   useEffect(() => {
     const fetchOwnerHotels = async () => {

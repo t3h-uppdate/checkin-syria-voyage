@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import {
@@ -16,10 +16,14 @@ import {
   Receipt,
   Settings,
   Star,
+  ShieldAlert,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,6 +34,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { user, userRole, loading: authLoading } = useAuth();
+  const [accessChecked, setAccessChecked] = useState(false);
   
   // Auto-close sidebar on mobile
   React.useEffect(() => {
@@ -46,6 +52,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       setSidebarOpen(false);
     }
   }, [location.pathname, isMobile]);
+
+  // Check user role for dashboard access
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        toast.error("You must be logged in to access the dashboard");
+        navigate('/login');
+      } else if (userRole !== 'owner' && userRole !== 'admin') {
+        toast.error("You don't have permission to access this area");
+        navigate('/');
+      } else {
+        setAccessChecked(true);
+      }
+    }
+  }, [user, userRole, authLoading, navigate]);
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
@@ -66,6 +87,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
     return location.pathname.startsWith(path);
   };
+
+  if (authLoading || !accessChecked) {
+    return (
+      <MainLayout>
+        <div className="pt-20 min-h-screen flex justify-center items-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Checking access...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
