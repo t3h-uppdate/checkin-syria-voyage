@@ -5,6 +5,7 @@ import HotelServices from '@/components/Dashboard/HotelServices';
 import HotelSelector from '@/components/Dashboard/HotelSelector';
 import { useHotelSelection } from '@/hooks/useHotelSelection';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function DashboardServicesPage() {
   const { 
@@ -14,6 +15,8 @@ export default function DashboardServicesPage() {
     isLoading, 
     isMultipleHotels 
   } = useHotelSelection();
+  
+  const { t } = useTranslation();
 
   const handleHotelChange = (hotelId: string) => {
     const hotel = hotels.find(h => h.id === hotelId) || null;
@@ -24,7 +27,7 @@ export default function DashboardServicesPage() {
     <DashboardLayout>
       <div className="py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Service Management</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.manageServices')}</h1>
           {isMultipleHotels && (
             <HotelSelector 
               hotels={hotels} 

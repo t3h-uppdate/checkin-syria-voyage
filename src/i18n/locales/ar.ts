@@ -1,4 +1,3 @@
-
 export default {
   common: {
     checkInSyria: 'تشيك إن سوريا',
@@ -139,5 +138,55 @@ export default {
     enterEmail: 'أدخل بريدك الإلكتروني لإعادة تعيين كلمة المرور',
     sendResetLink: 'إرسال رابط إعادة التعيين',
     backToLogin: 'العودة إلى تسجيل الدخول'
+  },
+  dashboard: {
+    title: 'لوحة تحكم الفندق',
+    welcome: 'مرحبًا بك في لوحة تحكم الفندق',
+    welcomeDescription: 'هذه هي لوحة التحكم المركزية لإدارة جميع جوانب عقارات الفندق الخاصة بك. استخدم الشريط الجانبي للتنقل عبر الأقسام المختلفة وإدارة الفنادق والغرف والحجوزات والمزيد.',
+    overview: 'نظرة عامة',
+    myHotels: 'فنادقي',
+    bookings: 'الحجوزات',
+    rooms: 'الغرف',
+    services: 'الخدمات',
+    messages: 'الرسائل',
+    reviews: 'التقييمات',
+    revenue: 'الإيرادات',
+    promotions: 'العروض الترويجية',
+    settings: 'الإعدادات',
+    account: 'الحساب',
+    noHotelsAssigned: 'ليس لديك أي فنادق مخصصة لك بعد',
+    manageHotels: 'إدارة عقارات الفندق الخاصة بك',
+    manageRooms: 'إدارة الغرف',
+    manageBookings: 'إدارة الحجوزات',
+    manageServices: 'إدارة الخدمات',
+    manageMessages: 'رسائل الضيوف',
+    manageReviews: 'إدارة التقييمات',
+    manageRevenue: 'تقارير الإيرادات',
+    managePromotions: 'إدارة العروض الترويجية',
+    checkingAccess: 'جارٍ التحقق من الوصول...',
+    noHotelMessage: 'ليس لديك أي فنادق بعد. الرجاء إضافة فندق قبل إدارة الغرف.',
+    goToHotels: 'الذهاب إلى الفنادق',
+    selectHotel: 'اختر فندقًا',
+    hotelStats: {
+      hotels: 'الفنادق',
+      rooms: 'الغرف',
+      bookings: 'الحجوزات',
+      notSignedIn: 'لم يتم تسجيل الدخول'
+    },
+    actions: {
+      manageRooms: 'إدارة الغرف',
+      update: 'تحديث',
+      remove: 'إزالة',
+      removeHotel: 'إزالة الفندق',
+      removeConfirm: 'هل أنت متأكد من أنك تريد إزالة هذا الفندق؟ لا يمكن التراجع عن هذا الإجراء.'
+    },
+    errors: {
+      fetchingHotels: 'حدث خطأ أثناء جلب الفنادق',
+      tryAgain: 'الرجاء المحاولة مرة أخرى لاحقًا'
+    },
+    emptyState: {
+      title: 'مرحبًا بك في لوحة تحكم الفندق',
+      description: 'ليس لديك أي فنادق مخصصة لحسابك بعد. الرجاء الاتصال بالمسؤول لإضافة فنادق إلى حسابك.'
+    }
   }
 };

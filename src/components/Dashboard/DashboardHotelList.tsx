@@ -12,6 +12,7 @@ import DashboardEmpty from './DashboardEmpty';
 import { Bed, Loader2, MapPin, Star, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useHotels } from '@/hooks/useHotels';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardHotelListProps {
   onSelectHotelForRooms: (hotel: HotelType) => void;
@@ -21,6 +22,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
   const { user } = useAuth();
   const { data: hotels, isLoading, isError } = useHotels({ ownerId: user?.id });
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleUpdateHotel = async (updatedHotel: HotelType) => {
     try {
@@ -82,8 +84,8 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
   if (isError) {
     return (
       <div className="text-center text-red-500 py-8 bg-red-50 rounded-lg border border-red-200">
-        <p className="font-medium">An error occurred while fetching hotels</p>
-        <p className="text-sm">Please try again later</p>
+        <p className="font-medium">{t('dashboard.errors.fetchingHotels')}</p>
+        <p className="text-sm">{t('dashboard.errors.tryAgain')}</p>
       </div>
     );
   }
@@ -92,8 +94,8 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
     return (
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>My Hotels</CardTitle>
-          <CardDescription>You don't have any hotels assigned to you yet</CardDescription>
+          <CardTitle>{t('dashboard.myHotels')}</CardTitle>
+          <CardDescription>{t('dashboard.noHotelsAssigned')}</CardDescription>
         </CardHeader>
         <CardContent>
           <DashboardEmpty />
@@ -106,8 +108,8 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
     <div>
       <Card className="shadow-md overflow-hidden">
         <CardHeader className="bg-muted/40 border-b">
-          <CardTitle>My Hotels</CardTitle>
-          <CardDescription>Manage your hotel properties</CardDescription>
+          <CardTitle>{t('dashboard.myHotels')}</CardTitle>
+          <CardDescription>{t('dashboard.manageHotels')}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
@@ -169,7 +171,7 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
                       onClick={() => onSelectHotelForRooms(hotel)}
                     >
                       <Bed className="h-4 w-4" />
-                      <span>Manage Rooms</span>
+                      <span>{t('dashboard.actions.manageRooms')}</span>
                     </Button>
                     
                     <EditHotelForm hotel={hotel} onUpdate={handleUpdateHotel} />
@@ -178,20 +180,20 @@ const DashboardHotelList: React.FC<DashboardHotelListProps> = ({ onSelectHotelFo
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" className="w-full flex items-center justify-center gap-2">
                           <Trash2 className="h-4 w-4" />
-                          <span>Remove</span>
+                          <span>{t('dashboard.actions.remove')}</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Remove Hotel</AlertDialogTitle>
+                          <AlertDialogTitle>{t('dashboard.actions.removeHotel')}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to remove "{hotel.name}"? This action cannot be undone.
+                            {t('dashboard.actions.removeConfirm')}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                           <AlertDialogAction onClick={() => handleDeleteHotel(hotel.id)}>
-                            Remove
+                            {t('dashboard.actions.remove')}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

@@ -6,9 +6,12 @@ import HotelSelector from '@/components/Dashboard/HotelSelector';
 import { useHotelSelection } from '@/hooks/useHotelSelection';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function DashboardRoomsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  
   const { 
     hotels, 
     selectedHotel, 
@@ -27,14 +30,14 @@ export default function DashboardRoomsPage() {
     return (
       <DashboardLayout>
         <div className="py-6">
-          <h1 className="text-2xl font-bold mb-6">Room Management</h1>
+          <h1 className="text-2xl font-bold mb-6">{t('dashboard.manageRooms')}</h1>
           <div className="p-8 text-center bg-background border rounded-lg">
-            <p className="mb-4">You don't have any hotels yet. Please add a hotel before managing rooms.</p>
+            <p className="mb-4">{t('dashboard.noHotelMessage')}</p>
             <button 
               className="text-primary hover:underline" 
               onClick={() => navigate('/dashboard/hotels')}
             >
-              Go to Hotels
+              {t('dashboard.goToHotels')}
             </button>
           </div>
         </div>
@@ -46,7 +49,7 @@ export default function DashboardRoomsPage() {
     <DashboardLayout>
       <div className="py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Room Management</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.manageRooms')}</h1>
           {isMultipleHotels && (
             <HotelSelector 
               hotels={hotels} 

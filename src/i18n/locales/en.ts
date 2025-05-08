@@ -1,4 +1,3 @@
-
 export default {
   common: {
     checkInSyria: 'CheckInSyria',
@@ -139,5 +138,55 @@ export default {
     enterEmail: 'Enter your email to reset your password',
     sendResetLink: 'Send Reset Link',
     backToLogin: 'Back to Login'
+  },
+  dashboard: {
+    title: 'Hotel Dashboard',
+    welcome: 'Welcome to Your Hotel Dashboard',
+    welcomeDescription: 'This is your centralized dashboard for managing all aspects of your hotel properties. Use the sidebar to navigate through different sections and manage your hotels, rooms, bookings, and more.',
+    overview: 'Overview',
+    myHotels: 'My Hotels',
+    bookings: 'Bookings',
+    rooms: 'Rooms',
+    services: 'Services',
+    messages: 'Messages',
+    reviews: 'Reviews',
+    revenue: 'Revenue',
+    promotions: 'Promotions',
+    settings: 'Settings',
+    account: 'Account',
+    noHotelsAssigned: 'You don\'t have any hotels assigned to you yet',
+    manageHotels: 'Manage your hotel properties',
+    manageRooms: 'Room Management',
+    manageBookings: 'Booking Management',
+    manageServices: 'Service Management', 
+    manageMessages: 'Guest Messages',
+    manageReviews: 'Reviews Management',
+    manageRevenue: 'Revenue Reports',
+    managePromotions: 'Promotions Management',
+    checkingAccess: 'Checking access...',
+    noHotelMessage: 'You don\'t have any hotels yet. Please add a hotel before managing rooms.',
+    goToHotels: 'Go to Hotels',
+    selectHotel: 'Select Hotel',
+    hotelStats: {
+      hotels: 'Hotels',
+      rooms: 'Rooms',
+      bookings: 'Bookings',
+      notSignedIn: 'Not signed in'
+    },
+    actions: {
+      manageRooms: 'Manage Rooms',
+      update: 'Update',
+      remove: 'Remove',
+      removeHotel: 'Remove Hotel',
+      removeConfirm: 'Are you sure you want to remove this hotel? This action cannot be undone.'
+    },
+    errors: {
+      fetchingHotels: 'An error occurred while fetching hotels',
+      tryAgain: 'Please try again later'
+    },
+    emptyState: {
+      title: 'Welcome to your Hotel Dashboard',
+      description: 'You don\'t have any hotels assigned to your account yet. Please contact the administrator to add hotels to your account.'
+    }
   }
 };

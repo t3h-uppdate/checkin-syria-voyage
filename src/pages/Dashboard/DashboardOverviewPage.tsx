@@ -8,6 +8,7 @@ import { Hotel as HotelIcon, Bed, Calendar, User } from 'lucide-react';
 import { useHotels } from '@/hooks/useHotels';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 export default function DashboardOverviewPage() {
   const { user, userRole } = useAuth();
@@ -16,6 +17,7 @@ export default function DashboardOverviewPage() {
   const [recentBookings, setRecentBookings] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [ownerHotels, setOwnerHotels] = useState([]);
+  const { t } = useTranslation();
 
   // Additional access control check
   useEffect(() => {
@@ -84,14 +86,14 @@ export default function DashboardOverviewPage() {
   return (
     <DashboardLayout>
       <div className="py-6">
-        <h1 className="text-2xl font-bold mb-6">Dashboard Overview</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('dashboard.overview')}</h1>
         
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="bg-primary text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <HotelIcon className="h-5 w-5" /> Hotels
+                <HotelIcon className="h-5 w-5" /> {t('dashboard.hotelStats.hotels')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -104,7 +106,7 @@ export default function DashboardOverviewPage() {
           <Card className="bg-secondary text-secondary-foreground">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Bed className="h-5 w-5" /> Rooms
+                <Bed className="h-5 w-5" /> {t('dashboard.hotelStats.rooms')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -115,7 +117,7 @@ export default function DashboardOverviewPage() {
           <Card className="bg-accent text-accent-foreground">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5" /> Bookings
+                <Calendar className="h-5 w-5" /> {t('dashboard.hotelStats.bookings')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -126,12 +128,12 @@ export default function DashboardOverviewPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-5 w-5" /> Account
+                <User className="h-5 w-5" /> {t('dashboard.account')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-sm font-medium truncate">
-                {user?.email || 'Not signed in'}
+                {user?.email || t('dashboard.hotelStats.notSignedIn')}
               </div>
             </CardContent>
           </Card>
@@ -140,13 +142,11 @@ export default function DashboardOverviewPage() {
         {/* Welcome Section */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Welcome to Your Hotel Dashboard</CardTitle>
+            <CardTitle>{t('dashboard.welcome')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              This is your centralized dashboard for managing all aspects of your hotel properties.
-              Use the sidebar to navigate through different sections and manage your hotels, rooms,
-              bookings, and more.
+              {t('dashboard.welcomeDescription')}
             </p>
           </CardContent>
         </Card>

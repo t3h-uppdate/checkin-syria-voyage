@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { user, userRole, loading: authLoading } = useAuth();
   const [accessChecked, setAccessChecked] = useState(false);
+  const { t } = useTranslation();
   
   // Auto-close sidebar on mobile
   React.useEffect(() => {
@@ -69,16 +71,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [user, userRole, authLoading, navigate]);
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
-    { icon: Hotel, label: 'My Hotels', path: '/dashboard/hotels' },
-    { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
-    { icon: Bed, label: 'Rooms', path: '/dashboard/rooms' },
-    { icon: Coffee, label: 'Services', path: '/dashboard/services' },
-    { icon: MessageSquare, label: 'Messages', path: '/dashboard/messages' },
-    { icon: Star, label: 'Reviews', path: '/dashboard/reviews' },
-    { icon: Receipt, label: 'Revenue', path: '/dashboard/revenue' },
-    { icon: Percent, label: 'Promotions', path: '/dashboard/promotions' },
-    { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+    { icon: LayoutDashboard, label: t('dashboard.overview'), path: '/dashboard' },
+    { icon: Hotel, label: t('dashboard.myHotels'), path: '/dashboard/hotels' },
+    { icon: Calendar, label: t('dashboard.bookings'), path: '/dashboard/bookings' },
+    { icon: Bed, label: t('dashboard.rooms'), path: '/dashboard/rooms' },
+    { icon: Coffee, label: t('dashboard.services'), path: '/dashboard/services' },
+    { icon: MessageSquare, label: t('dashboard.messages'), path: '/dashboard/messages' },
+    { icon: Star, label: t('dashboard.reviews'), path: '/dashboard/reviews' },
+    { icon: Receipt, label: t('dashboard.revenue'), path: '/dashboard/revenue' },
+    { icon: Percent, label: t('dashboard.promotions'), path: '/dashboard/promotions' },
+    { icon: Settings, label: t('dashboard.settings'), path: '/dashboard/settings' },
   ];
 
   const isActive = (path: string) => {
@@ -94,7 +96,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="pt-20 min-h-screen flex justify-center items-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">Checking access...</p>
+            <p className="text-muted-foreground">{t('dashboard.checkingAccess')}</p>
           </div>
         </div>
       </MainLayout>
@@ -132,7 +134,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         >
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className={cn("font-semibold transition-opacity", sidebarOpen ? "opacity-100" : "opacity-0")}>
-              Hotel Dashboard
+              {t('dashboard.title')}
             </h2>
             {!isMobile && (
               <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSidebarOpen(!sidebarOpen)}>

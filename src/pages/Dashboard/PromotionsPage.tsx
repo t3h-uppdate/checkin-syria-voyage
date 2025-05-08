@@ -5,8 +5,11 @@ import PromotionsManagement from '@/components/Dashboard/PromotionsManagement';
 import HotelSelector from '@/components/Dashboard/HotelSelector';
 import { useHotelSelection } from '@/hooks/useHotelSelection';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function DashboardPromotionsPage() {
+  const { t } = useTranslation();
+  
   const { 
     hotels, 
     selectedHotel, 
@@ -24,7 +27,7 @@ export default function DashboardPromotionsPage() {
     <DashboardLayout>
       <div className="py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Promotions Management</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.managePromotions')}</h1>
           {isMultipleHotels && (
             <HotelSelector 
               hotels={hotels} 

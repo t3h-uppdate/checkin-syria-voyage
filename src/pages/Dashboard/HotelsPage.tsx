@@ -5,9 +5,11 @@ import DashboardHotelList from '@/components/Dashboard/DashboardHotelList';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Hotel } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function DashboardHotelsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const handleSelectHotelForRooms = (hotel) => {
     // Store the selected hotel in session storage to access in rooms page
@@ -23,8 +25,8 @@ export default function DashboardHotelsPage() {
             <Hotel className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">My Hotels</h1>
-            <p className="text-muted-foreground text-sm">Manage your hotel properties</p>
+            <h1 className="text-2xl font-bold">{t('dashboard.myHotels')}</h1>
+            <p className="text-muted-foreground text-sm">{t('dashboard.manageHotels')}</p>
           </div>
         </div>
         <DashboardHotelList onSelectHotelForRooms={handleSelectHotelForRooms} />

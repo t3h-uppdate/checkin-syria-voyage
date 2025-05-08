@@ -5,8 +5,11 @@ import GuestMessages from '@/components/Dashboard/GuestMessages';
 import HotelSelector from '@/components/Dashboard/HotelSelector';
 import { useHotelSelection } from '@/hooks/useHotelSelection';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function DashboardMessagesPage() {
+  const { t } = useTranslation();
+  
   const { 
     hotels, 
     selectedHotel, 
@@ -24,7 +27,7 @@ export default function DashboardMessagesPage() {
     <DashboardLayout>
       <div className="py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Guest Messages</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.manageMessages')}</h1>
           {isMultipleHotels && (
             <HotelSelector 
               hotels={hotels} 
