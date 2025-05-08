@@ -15,6 +15,10 @@ import RegisterPage from "./pages/RegisterPage";
 import GuestProfilePage from "./pages/GuestProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import BookingsPage from "./pages/BookingsPage";
+import MessagesPage from "./pages/MessagesPage";
+import ReviewsPage from "./pages/ReviewsPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import AdminControlPanelPage from "./pages/AdminControlPanelPage";
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
@@ -60,6 +64,25 @@ const ProtectedOwnerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Protected route wrapper for user features
+const ProtectedUserRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<HomePage />} />
@@ -69,6 +92,28 @@ const AppRoutes = () => (
     <Route path="/confirmation/:bookingId" element={<BookingConfirmationPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegisterPage />} />
+    
+    {/* User Routes - Protected */}
+    <Route path="/bookings" element={
+      <ProtectedUserRoute>
+        <BookingsPage />
+      </ProtectedUserRoute>
+    } />
+    <Route path="/messages" element={
+      <ProtectedUserRoute>
+        <MessagesPage />
+      </ProtectedUserRoute>
+    } />
+    <Route path="/reviews" element={
+      <ProtectedUserRoute>
+        <ReviewsPage />
+      </ProtectedUserRoute>
+    } />
+    <Route path="/notifications" element={
+      <ProtectedUserRoute>
+        <NotificationsPage />
+      </ProtectedUserRoute>
+    } />
     
     {/* Dashboard Routes - Protected */}
     <Route path="/dashboard" element={

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Menu, Search, User, ChevronDown, LogOut, Hotel, Settings, Shield } from 'lucide-react';
+import { Menu, User, ChevronDown, LogOut, Hotel, Settings, Shield, MessageSquare, Book, Star, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -63,8 +63,6 @@ const Header = () => {
 
   const isHomePage = location.pathname === '/';
   
-  console.log("Current user role in Header:", userRole); // Debug log
-
   return (
     <header 
       className={`fixed w-full z-50 transition-all duration-300 ${
@@ -104,56 +102,92 @@ const Header = () => {
             </Link>
             
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className={`flex items-center gap-2 ${
-                      isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
-                    }`}
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Mitt Konto</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {userRole === 'admin' && (
-                    <>
+              <>
+                <Link 
+                  to="/bookings" 
+                  className={`transition-colors duration-300 hover:text-primary ${
+                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                  }`}
+                >
+                  {t('common.myBookings')}
+                </Link>
+                <Link 
+                  to="/messages" 
+                  className={`transition-colors duration-300 hover:text-primary ${
+                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                  }`}
+                >
+                  {t('common.messages')}
+                </Link>
+                <Link 
+                  to="/reviews" 
+                  className={`transition-colors duration-300 hover:text-primary ${
+                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                  }`}
+                >
+                  {t('common.myReviews')}
+                </Link>
+                <Link 
+                  to="/notifications" 
+                  className={`transition-colors duration-300 hover:text-primary ${
+                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                  }`}
+                >
+                  {t('common.notifications')}
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className={`flex items-center gap-2 ${
+                        isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                      }`}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>{t('common.profile')}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {userRole === 'admin' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin-control-panel" className="flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            <span>Admin Control Panel</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin-dashboard" className="flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            <span>User Dashboard</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    {(userRole === 'owner' || userRole === 'admin') && (
                       <DropdownMenuItem asChild>
-                        <Link to="/admin-control-panel" className="flex items-center gap-2">
-                          <Shield className="h-4 w-4" />
-                          <span>Admin Control Panel</span>
+                        <Link to="/dashboard" className="flex items-center gap-2">
+                          <Hotel className="h-4 w-4" />
+                          <span>{t('common.dashboard')}</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin-dashboard" className="flex items-center gap-2">
-                          <Shield className="h-4 w-4" />
-                          <span>User Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="flex items-center gap-2">
-                      <Hotel className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
-                    <LogOut className="h-4 w-4" />
-                    <span>Logga ut</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    )}
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        <span>{t('common.settings')}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
+                      <LogOut className="h-4 w-4" />
+                      <span>{t('common.logout')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <Link 
                 to="/login" 
@@ -214,6 +248,38 @@ const Header = () => {
               
               {user ? (
                 <>
+                  <Link 
+                    to="/bookings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary flex items-center gap-2"
+                  >
+                    <Book className="h-4 w-4" />
+                    <span>{t('common.myBookings')}</span>
+                  </Link>
+                  <Link 
+                    to="/messages"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary flex items-center gap-2"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>{t('common.messages')}</span>
+                  </Link>
+                  <Link 
+                    to="/reviews"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary flex items-center gap-2"
+                  >
+                    <Star className="h-4 w-4" />
+                    <span>{t('common.myReviews')}</span>
+                  </Link>
+                  <Link 
+                    to="/notifications"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary flex items-center gap-2"
+                  >
+                    <Bell className="h-4 w-4" />
+                    <span>{t('common.notifications')}</span>
+                  </Link>
                   {userRole === 'admin' && (
                     <>
                       <Link 
@@ -234,21 +300,23 @@ const Header = () => {
                       </Link>
                     </>
                   )}
-                  <Link 
-                    to="/dashboard"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary flex items-center gap-2"
-                  >
-                    <Hotel className="h-4 w-4" />
-                    <span>Dashboard</span>
-                  </Link>
+                  {(userRole === 'owner' || userRole === 'admin') && (
+                    <Link 
+                      to="/dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-gray-700 hover:text-primary flex items-center gap-2"
+                    >
+                      <Hotel className="h-4 w-4" />
+                      <span>{t('common.dashboard')}</span>
+                    </Link>
+                  )}
                   <Link 
                     to="/settings"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="text-gray-700 hover:text-primary flex items-center gap-2"
                   >
                     <Settings className="h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t('common.settings')}</span>
                   </Link>
                   <Button
                     variant="ghost"
@@ -259,7 +327,7 @@ const Header = () => {
                     className="text-red-500 hover:text-red-700 justify-start flex items-center gap-2"
                   >
                     <LogOut className="h-4 w-4" />
-                    <span>Logga ut</span>
+                    <span>{t('common.logout')}</span>
                   </Button>
                 </>
               ) : (

@@ -1,3 +1,4 @@
+
 export default {
   common: {
     checkInSyria: 'CheckInSyria',
@@ -12,7 +13,12 @@ export default {
     loading: 'Loading...',
     error: 'An error occurred',
     notFound: 'Page not found',
-    backToHome: 'Back to Home'
+    backToHome: 'Back to Home',
+    myBookings: 'My Bookings',
+    messages: 'Messages',
+    myReviews: 'My Reviews',
+    notifications: 'Notifications',
+    settings: 'Settings'
   },
   home: {
     welcomeMessage: 'Discover the beauty of Syria',
@@ -83,7 +89,12 @@ export default {
     taxes: 'Taxes & Fees',
     total: 'Total',
     confirmBooking: 'Confirm Booking',
-    termsAndConditions: 'I agree to the terms and conditions'
+    termsAndConditions: 'I agree to the terms and conditions',
+    myBookings: 'My Bookings',
+    upcomingBookings: 'Upcoming Bookings',
+    pastBookings: 'Past Bookings',
+    noBookings: 'No bookings found',
+    viewBookingDetails: 'View Details'
   },
   confirmation: {
     bookingConfirmed: 'Booking Confirmed!',
@@ -188,5 +199,55 @@ export default {
       title: 'Welcome to your Hotel Dashboard',
       description: 'You don\'t have any hotels assigned to your account yet. Please contact the administrator to add hotels to your account.'
     }
+  },
+  messages: {
+    title: 'Messages',
+    noMessages: 'You have no messages yet',
+    send: 'Send',
+    newMessage: 'New Message',
+    writeMessage: 'Write a message...',
+    to: 'To',
+    subject: 'Subject',
+    messageContent: 'Message',
+    sent: 'Message sent successfully',
+    error: 'Error sending message',
+    compose: 'Compose Message',
+    inbox: 'Inbox',
+    sent: 'Sent',
+    drafts: 'Drafts',
+    noHotelSelected: 'Please select a hotel to send a message to',
+    sendToHotel: 'Send Message to Hotel',
+    messageSent: 'Your message has been sent'
+  },
+  reviews: {
+    title: 'Reviews',
+    myReviews: 'My Reviews',
+    writeReview: 'Write a Review',
+    noReviews: 'You haven\'t submitted any reviews yet',
+    rating: 'Rating',
+    comment: 'Comment',
+    submit: 'Submit Review',
+    submitting: 'Submitting...',
+    submitted: 'Review submitted successfully',
+    error: 'Error submitting review',
+    selectHotel: 'Select a hotel to review',
+    viewAll: 'View All Reviews',
+    recentReviews: 'Recent Reviews',
+    reviewDate: 'Review Date',
+    editReview: 'Edit Review',
+    deleteReview: 'Delete Review',
+    confirmDelete: 'Are you sure you want to delete this review?',
+    reviewFor: 'Review for'
+  },
+  notifications: {
+    title: 'Notifications',
+    noNotifications: 'You have no notifications',
+    markAsRead: 'Mark as Read',
+    markAllAsRead: 'Mark All as Read',
+    allRead: 'All notifications marked as read',
+    bookingConfirmed: 'Your booking has been confirmed',
+    bookingCancelled: 'Your booking has been cancelled',
+    newMessage: 'You have a new message',
+    reviewResponse: 'A hotel owner responded to your review'
   }
 };
