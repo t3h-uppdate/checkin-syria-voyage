@@ -25,12 +25,19 @@ interface Message {
   is_read: boolean;
   hotel_name?: string;
   sender_name?: string;
+  receiver_name?: string;
 }
 
 interface Hotel {
   id: string;
   name: string;
   owner_id: string;
+}
+
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 const UserMessages = () => {
@@ -57,53 +64,88 @@ const UserMessages = () => {
       try {
         setLoading(true);
         
-        // Fetch messages where user is receiver
-        const { data: receivedMessages, error: receivedError } = await supabase
-          .from('messages')
-          .select(`
-            *,
-            hotels(name),
-            sender:profiles!sender_id(first_name, last_name)
-          `)
-          .eq('receiver_id', user.id);
-          
-        if (receivedError) throw receivedError;
-        
-        // Fetch messages where user is sender
-        const { data: sentMessages, error: sentError } = await supabase
-          .from('messages')
-          .select(`
-            *,
-            hotels(name),
-            receiver:profiles!receiver_id(first_name, last_name)
-          `)
-          .eq('sender_id', user.id);
-          
-        if (sentError) throw sentError;
-        
-        // Fetch all available hotels for sending messages
+        // Fetch all hotels
         const { data: hotelsData, error: hotelsError } = await supabase
           .from('hotels')
           .select('id, name, owner_id');
           
         if (hotelsError) throw hotelsError;
-        
-        const formattedReceivedMessages = receivedMessages?.map(msg => ({
-          ...msg,
-          hotel_name: msg.hotels?.name || null,
-          sender_name: msg.sender ? `${msg.sender.first_name} ${msg.sender.last_name}` : 'Unknown'
-        })) || [];
-        
-        const formattedSentMessages = sentMessages?.map(msg => ({
-          ...msg,
-          hotel_name: msg.hotels?.name || null,
-          receiver_name: msg.receiver ? `${msg.receiver.first_name} ${msg.receiver.last_name}` : 'Unknown'
-        })) || [];
-        
-        const allMessages = [...formattedReceivedMessages, ...formattedSentMessages];
-        
-        setMessages(allMessages);
         setHotels(hotelsData || []);
+        
+        // Fetch received messages
+        const { data: receivedMessagesData, error: receivedError } = await supabase
+          .from('messages')
+          .select(`
+            *,
+            sender_profile:profiles!sender_id(first_name, last_name)
+          `)
+          .eq('receiver_id', user.id);
+          
+        if (receivedError) throw receivedError;
+        
+        // Get hotel names for received messages
+        const receivedMessagesWithHotelNames = await Promise.all(
+          (receivedMessagesData || []).map(async (msg) => {
+            let hotelName = null;
+            if (msg.hotel_id) {
+              const { data: hotelData } = await supabase
+                .from('hotels')
+                .select('name')
+                .eq('id', msg.hotel_id)
+                .single();
+              
+              hotelName = hotelData?.name;
+            }
+            
+            return {
+              ...msg,
+              hotel_name: hotelName,
+              sender_name: msg.sender_profile ? 
+                `${msg.sender_profile.first_name || ''} ${msg.sender_profile.last_name || ''}`.trim() || 'Unknown' 
+                : 'Unknown'
+            };
+          })
+        );
+        
+        // Fetch sent messages
+        const { data: sentMessagesData, error: sentError } = await supabase
+          .from('messages')
+          .select(`
+            *,
+            receiver_profile:profiles!receiver_id(first_name, last_name)
+          `)
+          .eq('sender_id', user.id);
+          
+        if (sentError) throw sentError;
+        
+        // Get hotel names for sent messages
+        const sentMessagesWithHotelNames = await Promise.all(
+          (sentMessagesData || []).map(async (msg) => {
+            let hotelName = null;
+            if (msg.hotel_id) {
+              const { data: hotelData } = await supabase
+                .from('hotels')
+                .select('name')
+                .eq('id', msg.hotel_id)
+                .single();
+              
+              hotelName = hotelData?.name;
+            }
+            
+            return {
+              ...msg,
+              hotel_name: hotelName,
+              receiver_name: msg.receiver_profile ? 
+                `${msg.receiver_profile.first_name || ''} ${msg.receiver_profile.last_name || ''}`.trim() || 'Hotel Owner' 
+                : 'Hotel Owner'
+            };
+          })
+        );
+        
+        // Combine received and sent messages
+        const allMessages = [...receivedMessagesWithHotelNames, ...sentMessagesWithHotelNames];
+        setMessages(allMessages);
+        
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError('Failed to load messages');
@@ -122,9 +164,40 @@ const UserMessages = () => {
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` },
-          (payload) => {
+          async (payload) => {
             const newMessage = payload.new as Message;
-            setMessages(prevMessages => [...prevMessages, newMessage]);
+            
+            // Get sender name
+            let senderName = 'Unknown';
+            const { data: senderData } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', newMessage.sender_id)
+              .single();
+            
+            if (senderData) {
+              senderName = `${senderData.first_name || ''} ${senderData.last_name || ''}`.trim() || 'Unknown';
+            }
+            
+            // Get hotel name if applicable
+            let hotelName = null;
+            if (newMessage.hotel_id) {
+              const { data: hotelData } = await supabase
+                .from('hotels')
+                .select('name')
+                .eq('id', newMessage.hotel_id)
+                .single();
+              
+              hotelName = hotelData?.name;
+            }
+            
+            const enrichedMessage = {
+              ...newMessage,
+              sender_name: senderName,
+              hotel_name: hotelName
+            };
+            
+            setMessages(prevMessages => [...prevMessages, enrichedMessage]);
             toast.info(t('notifications.newMessage'));
           }
         )
@@ -190,6 +263,42 @@ const UserMessages = () => {
       setContent('');
       setSelectedHotelId('');
       setIsDialogOpen(false);
+      
+      // Refresh messages list
+      const { data: newMessage } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          receiver_profile:profiles!receiver_id(first_name, last_name)
+        `)
+        .eq('sender_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (newMessage) {
+        // Get hotel name
+        let hotelName = null;
+        if (newMessage.hotel_id) {
+          const { data: hotelData } = await supabase
+            .from('hotels')
+            .select('name')
+            .eq('id', newMessage.hotel_id)
+            .single();
+          
+          hotelName = hotelData?.name;
+        }
+        
+        const enrichedMessage = {
+          ...newMessage,
+          hotel_name: hotelName,
+          receiver_name: newMessage.receiver_profile ? 
+            `${newMessage.receiver_profile.first_name || ''} ${newMessage.receiver_profile.last_name || ''}`.trim() || 'Hotel Owner' 
+            : 'Hotel Owner'
+        };
+        
+        setMessages(prev => [...prev, enrichedMessage]);
+      }
     } catch (err) {
       console.error('Error sending message:', err);
       toast.error(t('messages.error'));
