@@ -114,7 +114,11 @@ export default {
     updateProfile: 'Update Profile',
     upcomingBookings: 'Upcoming Bookings',
     pastBookings: 'Past Bookings',
-    noBookings: 'No bookings found'
+    noBookings: 'No bookings found',
+    accountSettings: 'Account Settings',
+    accountPreferences: 'Account Preferences',
+    profileUpdated: 'Profile updated successfully',
+    updateError: 'Error updating profile'
   },
   admin: {
     dashboard: 'Dashboard',
@@ -248,5 +252,38 @@ export default {
     bookingCancelled: 'Your booking has been cancelled',
     newMessage: 'You have a new message',
     reviewResponse: 'A hotel owner responded to your review'
+  },
+  settings: {
+    title: 'Settings',
+    account: 'Account',
+    profile: 'Profile',
+    preferences: 'Preferences',
+    security: 'Security',
+    notifications: 'Notifications',
+    language: 'Language',
+    theme: 'Theme',
+    privacy: 'Privacy',
+    saveChanges: 'Save Changes',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+    updatePassword: 'Update Password',
+    passwordRequirements: 'Password should be at least 8 characters with numbers, uppercase, lowercase, and special characters.',
+    deleteAccount: 'Delete Account',
+    deleteConfirmation: 'Are you sure you want to delete your account? This action cannot be undone.',
+    personalInformation: 'Personal Information',
+    emailNotifications: 'Email Notifications',
+    bookingConfirmations: 'Booking Confirmations',
+    bookingReminders: 'Booking Reminders',
+    promotionalEmails: 'Promotional Emails',
+    newsletter: 'Newsletter',
+    systemUpdates: 'System Updates',
+    dataSharing: 'Data Sharing & Privacy',
+    shareBookingHistory: 'Share Booking History',
+    shareProfileData: 'Share Profile Data',
+    cookiesConsent: 'Allow Cookies',
+    usageTracking: 'Allow Usage Tracking',
+    downloadData: 'Download Your Data',
+    accountDeletion: 'Account Deletion'
   }
 };

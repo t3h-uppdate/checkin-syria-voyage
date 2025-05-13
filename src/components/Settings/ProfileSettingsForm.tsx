@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useTranslation } from 'react-i18next';
 import {
   Form,
@@ -28,6 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 // Comprehensive form schema
 const formSchema = z.object({
@@ -41,35 +42,91 @@ const formSchema = z.object({
   addressCity: z.string().optional(),
   addressPostalCode: z.string().optional(),
   addressCountry: z.string().optional(),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 const ProfileSettingsForm = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const { t } = useTranslation();
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch profile data from the database
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) throw error;
+        
+        setProfileData(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [user]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       displayName: user?.user_metadata?.display_name || "",
       email: user?.email || "",
-      phoneNumber: user?.user_metadata?.phone_number || "",
-      dateOfBirth: user?.user_metadata?.date_of_birth ? new Date(user.user_metadata.date_of_birth) : undefined,
-      nationality: user?.user_metadata?.nationality || "",
-      gender: user?.user_metadata?.gender || "",
-      addressStreet: user?.user_metadata?.address_street || "",
-      addressCity: user?.user_metadata?.address_city || "",
-      addressPostalCode: user?.user_metadata?.address_postal_code || "",
-      addressCountry: user?.user_metadata?.address_country || "",
+      phoneNumber: "",
+      dateOfBirth: undefined,
+      nationality: "",
+      gender: undefined,
+      addressStreet: "",
+      addressCity: "",
+      addressPostalCode: "",
+      addressCountry: "",
+      firstName: "",
+      lastName: "",
     },
   });
 
+  // Set form values once profile data is loaded
+  useEffect(() => {
+    if (profileData && !loading) {
+      form.reset({
+        displayName: user?.user_metadata?.display_name || "",
+        email: user?.email || "",
+        phoneNumber: profileData?.phone_number || user?.user_metadata?.phone_number || "",
+        dateOfBirth: profileData?.date_of_birth 
+          ? new Date(profileData.date_of_birth)
+          : user?.user_metadata?.date_of_birth 
+            ? new Date(user.user_metadata.date_of_birth)
+            : undefined,
+        nationality: profileData?.nationality || user?.user_metadata?.nationality || "",
+        gender: (profileData?.gender || user?.user_metadata?.gender || undefined) as any,
+        addressStreet: profileData?.address_street || user?.user_metadata?.address_street || "",
+        addressCity: profileData?.address_city || user?.user_metadata?.address_city || "",
+        addressPostalCode: profileData?.address_postal_code || user?.user_metadata?.address_postal_code || "",
+        addressCountry: profileData?.address_country || user?.user_metadata?.address_country || "",
+        firstName: profileData?.first_name || "",
+        lastName: profileData?.last_name || "",
+      });
+    }
+  }, [profileData, loading, user, form]);
+
   const onSubmit = async (data: FormData) => {
+    if (!user) return;
+    
     try {
-      const { error } = await supabase.auth.updateUser({
-        email: data.email,
+      // Update Supabase auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
         data: {
           display_name: data.displayName,
           phone_number: data.phoneNumber,
@@ -83,20 +140,31 @@ const ProfileSettingsForm = () => {
         }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
-      toast({
-        title: t('profile.updateProfile'),
-        description: "Your profile has been updated successfully.",
-      });
+      // Update profile in the database
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          phone_number: data.phoneNumber,
+          // Add other fields you want to update in the profiles table
+        })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      toast.success(t('profile.profileUpdated'));
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error updating profile:', error);
+      toast.error(t('profile.updateError'));
     }
   };
+
+  if (loading) {
+    return <div>{t('common.loading')}</div>;
+  }
 
   return (
     <Form {...form}>
@@ -106,6 +174,34 @@ const ProfileSettingsForm = () => {
           <div className="border rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Name</h3>
             <p className="text-muted-foreground mb-4">Let us know what to call you</p>
+            
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your first name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your last name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
@@ -221,7 +317,7 @@ const ProfileSettingsForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nationality</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your nationality" />
@@ -231,6 +327,13 @@ const ProfileSettingsForm = () => {
                       <SelectItem value="us">United States</SelectItem>
                       <SelectItem value="uk">United Kingdom</SelectItem>
                       <SelectItem value="ca">Canada</SelectItem>
+                      <SelectItem value="sy">Syria</SelectItem>
+                      <SelectItem value="lb">Lebanon</SelectItem>
+                      <SelectItem value="jo">Jordan</SelectItem>
+                      <SelectItem value="tr">Turkey</SelectItem>
+                      <SelectItem value="iq">Iraq</SelectItem>
+                      <SelectItem value="sa">Saudi Arabia</SelectItem>
+                      <SelectItem value="ae">United Arab Emirates</SelectItem>
                       {/* Add more countries */}
                     </SelectContent>
                   </Select>
@@ -322,7 +425,7 @@ const ProfileSettingsForm = () => {
                   <FormItem>
                     <FormLabel>Country</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select your country" />
                         </SelectTrigger>
@@ -330,7 +433,13 @@ const ProfileSettingsForm = () => {
                           <SelectItem value="us">United States</SelectItem>
                           <SelectItem value="uk">United Kingdom</SelectItem>
                           <SelectItem value="ca">Canada</SelectItem>
-                          {/* Add more countries */}
+                          <SelectItem value="sy">Syria</SelectItem>
+                          <SelectItem value="lb">Lebanon</SelectItem>
+                          <SelectItem value="jo">Jordan</SelectItem>
+                          <SelectItem value="tr">Turkey</SelectItem>
+                          <SelectItem value="iq">Iraq</SelectItem>
+                          <SelectItem value="sa">Saudi Arabia</SelectItem>
+                          <SelectItem value="ae">United Arab Emirates</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -344,7 +453,7 @@ const ProfileSettingsForm = () => {
 
         <div className="flex justify-end">
           <Button type="submit">
-            Save Changes
+            {t('settings.saveChanges')}
           </Button>
         </div>
       </form>

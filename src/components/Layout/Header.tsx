@@ -102,92 +102,84 @@ const Header = () => {
             </Link>
             
             {user ? (
-              <>
-                <Link 
-                  to="/bookings" 
-                  className={`transition-colors duration-300 hover:text-primary ${
-                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
-                  }`}
-                >
-                  {t('common.myBookings')}
-                </Link>
-                <Link 
-                  to="/messages" 
-                  className={`transition-colors duration-300 hover:text-primary ${
-                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
-                  }`}
-                >
-                  {t('common.messages')}
-                </Link>
-                <Link 
-                  to="/reviews" 
-                  className={`transition-colors duration-300 hover:text-primary ${
-                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
-                  }`}
-                >
-                  {t('common.myReviews')}
-                </Link>
-                <Link 
-                  to="/notifications" 
-                  className={`transition-colors duration-300 hover:text-primary ${
-                    isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
-                  }`}
-                >
-                  {t('common.notifications')}
-                </Link>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className={`flex items-center gap-2 ${
-                        isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
-                      }`}
-                    >
-                      <User className="h-4 w-4" />
-                      <span>{t('common.profile')}</span>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {userRole === 'admin' && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin-control-panel" className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            <span>Admin Control Panel</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin-dashboard" className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            <span>User Dashboard</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-                    {(userRole === 'owner' || userRole === 'admin') && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className={`flex items-center gap-2 ${
+                      isScrolled || !isHomePage ? 'text-gray-700' : 'text-white'
+                    }`}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>{t('common.profile')}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <Link to="/bookings" className="flex items-center gap-2 w-full">
+                      <Book className="h-4 w-4" />
+                      <span>{t('common.myBookings')}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/messages" className="flex items-center gap-2 w-full">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>{t('common.messages')}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/reviews" className="flex items-center gap-2 w-full">
+                      <Star className="h-4 w-4" />
+                      <span>{t('common.myReviews')}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/notifications" className="flex items-center gap-2 w-full">
+                      <Bell className="h-4 w-4" />
+                      <span>{t('common.notifications')}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  
+                  {userRole === 'admin' && (
+                    <>
                       <DropdownMenuItem asChild>
-                        <Link to="/dashboard" className="flex items-center gap-2">
-                          <Hotel className="h-4 w-4" />
-                          <span>{t('common.dashboard')}</span>
+                        <Link to="/admin-control-panel" className="flex items-center gap-2 w-full">
+                          <Shield className="h-4 w-4" />
+                          <span>Admin Control Panel</span>
                         </Link>
                       </DropdownMenuItem>
-                    )}
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin-dashboard" className="flex items-center gap-2 w-full">
+                          <Shield className="h-4 w-4" />
+                          <span>User Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {(userRole === 'owner' || userRole === 'admin') && (
                     <DropdownMenuItem asChild>
-                      <Link to="/settings" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        <span>{t('common.settings')}</span>
+                      <Link to="/dashboard" className="flex items-center gap-2 w-full">
+                        <Hotel className="h-4 w-4" />
+                        <span>{t('common.dashboard')}</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
-                      <LogOut className="h-4 w-4" />
-                      <span>{t('common.logout')}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="flex items-center gap-2 w-full">
+                      <Settings className="h-4 w-4" />
+                      <span>{t('common.settings')}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
+                    <LogOut className="h-4 w-4" />
+                    <span>{t('common.logout')}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link 
                 to="/login" 
