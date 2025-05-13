@@ -211,31 +211,49 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_city: string | null
+          address_country: string | null
+          address_postal_code: string | null
+          address_street: string | null
           created_at: string
+          display_name: string | null
           email: string
           first_name: string | null
           id: string
           last_name: string | null
+          nationality: string | null
           phone_number: string | null
           profile_picture: string | null
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
+          address_city?: string | null
+          address_country?: string | null
+          address_postal_code?: string | null
+          address_street?: string | null
           created_at?: string
+          display_name?: string | null
           email: string
           first_name?: string | null
           id: string
           last_name?: string | null
+          nationality?: string | null
           phone_number?: string | null
           profile_picture?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
+          address_city?: string | null
+          address_country?: string | null
+          address_postal_code?: string | null
+          address_street?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string
           first_name?: string | null
           id?: string
           last_name?: string | null
+          nationality?: string | null
           phone_number?: string | null
           profile_picture?: string | null
           role?: Database["public"]["Enums"]["user_role"]

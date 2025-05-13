@@ -101,7 +101,7 @@ const ProfileSettingsForm = () => {
   useEffect(() => {
     if (profileData && !loading) {
       form.reset({
-        displayName: user?.user_metadata?.display_name || "",
+        displayName: profileData?.display_name || user?.user_metadata?.display_name || "",
         email: user?.email || "",
         phoneNumber: profileData?.phone_number || user?.user_metadata?.phone_number || "",
         dateOfBirth: profileData?.date_of_birth 
@@ -149,7 +149,12 @@ const ProfileSettingsForm = () => {
           first_name: data.firstName,
           last_name: data.lastName,
           phone_number: data.phoneNumber,
-          // Add other fields you want to update in the profiles table
+          display_name: data.displayName,
+          nationality: data.nationality,
+          address_street: data.addressStreet,
+          address_city: data.addressCity,
+          address_postal_code: data.addressPostalCode,
+          address_country: data.addressCountry,
         })
         .eq('id', user.id);
 
