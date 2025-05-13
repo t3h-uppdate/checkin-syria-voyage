@@ -75,17 +75,27 @@ const UserMessages = () => {
         // Fetch received messages
         const { data: receivedMessagesData, error: receivedError } = await supabase
           .from('messages')
-          .select(`
-            *,
-            sender_profile:profiles!sender_id(first_name, last_name)
-          `)
+          .select('*')
           .eq('receiver_id', user.id);
           
         if (receivedError) throw receivedError;
         
-        // Get hotel names for received messages
-        const receivedMessagesWithHotelNames = await Promise.all(
+        // Get sender names and hotel names for received messages
+        const receivedMessagesWithMetadata = await Promise.all(
           (receivedMessagesData || []).map(async (msg) => {
+            // Get sender name
+            let senderName = 'Unknown';
+            const { data: senderData, error: senderError } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', msg.sender_id)
+              .single();
+            
+            if (!senderError && senderData) {
+              senderName = `${senderData.first_name || ''} ${senderData.last_name || ''}`.trim() || 'Unknown';
+            }
+            
+            // Get hotel name
             let hotelName = null;
             if (msg.hotel_id) {
               const { data: hotelData } = await supabase
@@ -100,9 +110,7 @@ const UserMessages = () => {
             return {
               ...msg,
               hotel_name: hotelName,
-              sender_name: msg.sender_profile ? 
-                `${msg.sender_profile.first_name || ''} ${msg.sender_profile.last_name || ''}`.trim() || 'Unknown' 
-                : 'Unknown'
+              sender_name: senderName
             };
           })
         );
@@ -110,17 +118,27 @@ const UserMessages = () => {
         // Fetch sent messages
         const { data: sentMessagesData, error: sentError } = await supabase
           .from('messages')
-          .select(`
-            *,
-            receiver_profile:profiles!receiver_id(first_name, last_name)
-          `)
+          .select('*')
           .eq('sender_id', user.id);
           
         if (sentError) throw sentError;
         
-        // Get hotel names for sent messages
-        const sentMessagesWithHotelNames = await Promise.all(
+        // Get receiver names and hotel names for sent messages
+        const sentMessagesWithMetadata = await Promise.all(
           (sentMessagesData || []).map(async (msg) => {
+            // Get receiver name
+            let receiverName = 'Hotel Owner';
+            const { data: receiverData, error: receiverError } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', msg.receiver_id)
+              .single();
+            
+            if (!receiverError && receiverData) {
+              receiverName = `${receiverData.first_name || ''} ${receiverData.last_name || ''}`.trim() || 'Hotel Owner';
+            }
+            
+            // Get hotel name
             let hotelName = null;
             if (msg.hotel_id) {
               const { data: hotelData } = await supabase
@@ -135,15 +153,13 @@ const UserMessages = () => {
             return {
               ...msg,
               hotel_name: hotelName,
-              receiver_name: msg.receiver_profile ? 
-                `${msg.receiver_profile.first_name || ''} ${msg.receiver_profile.last_name || ''}`.trim() || 'Hotel Owner' 
-                : 'Hotel Owner'
+              receiver_name: receiverName
             };
           })
         );
         
         // Combine received and sent messages
-        const allMessages = [...receivedMessagesWithHotelNames, ...sentMessagesWithHotelNames];
+        const allMessages = [...receivedMessagesWithMetadata, ...sentMessagesWithMetadata];
         setMessages(allMessages);
         
       } catch (err) {
@@ -169,13 +185,13 @@ const UserMessages = () => {
             
             // Get sender name
             let senderName = 'Unknown';
-            const { data: senderData } = await supabase
+            const { data: senderData, error: senderError } = await supabase
               .from('profiles')
               .select('first_name, last_name')
               .eq('id', newMessage.sender_id)
               .single();
             
-            if (senderData) {
+            if (!senderError && senderData) {
               senderName = `${senderData.first_name || ''} ${senderData.last_name || ''}`.trim() || 'Unknown';
             }
             
@@ -265,18 +281,32 @@ const UserMessages = () => {
       setIsDialogOpen(false);
       
       // Refresh messages list
-      const { data: newMessage } = await supabase
+      const { data: newMessage, error: newMessageError } = await supabase
         .from('messages')
-        .select(`
-          *,
-          receiver_profile:profiles!receiver_id(first_name, last_name)
-        `)
+        .select('*')
         .eq('sender_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
       
+      if (newMessageError) {
+        console.error('Error fetching new message:', newMessageError);
+        return;
+      }
+      
       if (newMessage) {
+        // Get receiver name
+        let receiverName = 'Hotel Owner';
+        const { data: receiverData, error: receiverError } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', newMessage.receiver_id)
+          .single();
+        
+        if (!receiverError && receiverData) {
+          receiverName = `${receiverData.first_name || ''} ${receiverData.last_name || ''}`.trim() || 'Hotel Owner';
+        }
+        
         // Get hotel name
         let hotelName = null;
         if (newMessage.hotel_id) {
@@ -292,9 +322,7 @@ const UserMessages = () => {
         const enrichedMessage = {
           ...newMessage,
           hotel_name: hotelName,
-          receiver_name: newMessage.receiver_profile ? 
-            `${newMessage.receiver_profile.first_name || ''} ${newMessage.receiver_profile.last_name || ''}`.trim() || 'Hotel Owner' 
-            : 'Hotel Owner'
+          receiver_name: receiverName
         };
         
         setMessages(prev => [...prev, enrichedMessage]);

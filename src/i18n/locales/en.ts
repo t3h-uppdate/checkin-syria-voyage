@@ -209,7 +209,6 @@ export default {
     to: 'To',
     subject: 'Subject',
     messageContent: 'Message',
-    sent: 'Message sent successfully',
     error: 'Error sending message',
     compose: 'Compose Message',
     inbox: 'Inbox',
