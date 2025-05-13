@@ -158,7 +158,7 @@ const GuestProfilePage = () => {
                 {profile.display_name || `${profile.first_name} ${profile.last_name}`}
               </CardTitle>
               <div className="flex items-center justify-center mt-2">
-                <Badge variant="outline" className="capitalize">
+                <Badge variant="role" className="capitalize">
                   {profile.role}
                 </Badge>
               </div>
@@ -197,7 +197,10 @@ const GuestProfilePage = () => {
                     <Flag className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <div className="font-medium">Nationality</div>
-                      <div>{getNationalityLabel(profile.nationality)}</div>
+                      <div className="flex items-center gap-2">
+                        {getNationalityLabel(profile.nationality)}
+                        <Badge variant="country">{profile.nationality.toUpperCase()}</Badge>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -216,7 +219,12 @@ const GuestProfilePage = () => {
                       )}
                       {profile.address_city && !profile.address_postal_code && <div>{profile.address_city}</div>}
                       {!profile.address_city && profile.address_postal_code && <div>{profile.address_postal_code}</div>}
-                      {profile.address_country && <div>{getNationalityLabel(profile.address_country)}</div>}
+                      {profile.address_country && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {getNationalityLabel(profile.address_country)}
+                          <Badge variant="country">{profile.address_country.toUpperCase()}</Badge>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

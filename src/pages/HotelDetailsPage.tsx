@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +8,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, MessageSquare, Star } from 'lucide-react';
 import MainLayout from '@/components/Layout/MainLayout';
 import ImageGallery from '@/components/Hotel/ImageGallery';
 import RoomCard from '@/components/Hotel/RoomCard';
@@ -17,12 +16,18 @@ import ReviewList from '@/components/Hotel/ReviewList';
 import { HOTELS, ROOMS, REVIEWS } from '@/data/mockData';
 import { Hotel } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/sonner';
+import { Badge } from '@/components/ui/badge';
 
 const HotelDetailsPage = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [rooms, setRooms] = useState<any[]>([]);
@@ -33,6 +38,15 @@ const HotelDetailsPage = () => {
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
   const [guests, setGuests] = useState<string>('2');
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // New state for messaging and review dialogs
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [messageContent, setMessageContent] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
   
   // Initialize from URL parameters
   useEffect(() => {
@@ -158,6 +172,92 @@ const HotelDetailsPage = () => {
     setActiveTab('rooms');
   };
 
+  const handleSendMessage = async () => {
+    if (!user || !hotel || !messageContent.trim()) return;
+    
+    try {
+      setSendingMessage(true);
+      
+      // Create a new message
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: hotel.ownerId,
+          hotel_id: hotel.id,
+          subject: `Message about ${hotel.name}`,
+          content: messageContent,
+          is_read: false
+        });
+        
+      if (messageError) throw messageError;
+      
+      toast.success(t('messages.sent'));
+      setMessageContent('');
+      setIsMessageDialogOpen(false);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error(t('common.error'));
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user || !hotel || !reviewContent.trim() || reviewRating < 1) return;
+    
+    try {
+      setSubmittingReview(true);
+      
+      // Check if user has already reviewed this hotel
+      const { data: existingReviews, error: checkError } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('hotel_id', hotel.id)
+        .eq('user_id', user.id);
+        
+      if (checkError) throw checkError;
+      
+      if (existingReviews && existingReviews.length > 0) {
+        toast.error(t('reviews.alreadyReviewed'));
+        setIsReviewDialogOpen(false);
+        setSubmittingReview(false);
+        return;
+      }
+      
+      // Create a new review
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: user.id,
+          hotel_id: hotel.id,
+          rating: reviewRating,
+          comment: reviewContent,
+        });
+        
+      if (reviewError) throw reviewError;
+      
+      // Fetch the updated reviews
+      const { data: updatedReviews, error: fetchError } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('hotel_id', hotel.id);
+        
+      if (fetchError) throw fetchError;
+      
+      setReviews(updatedReviews || []);
+      toast.success(t('reviews.submitted'));
+      setReviewContent('');
+      setReviewRating(5);
+      setIsReviewDialogOpen(false);
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      toast.error(t('common.error'));
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -199,22 +299,114 @@ const HotelDetailsPage = () => {
       <div className="pt-24 pb-12">
         <div className="container mx-auto px-4">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">{hotel.name}</h1>
-            <div className="flex items-center text-gray-600 mb-4">
-              <div className="flex items-center mr-4">
-                <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <span>{hotel.rating.toFixed(1)}</span>
-                <span className="ml-1 text-gray-500">({hotel.reviewCount} reviews)</span>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{hotel.name}</h1>
+                <div className="flex items-center text-gray-600">
+                  <div className="flex items-center mr-4">
+                    <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span>{hotel.rating.toFixed(1)}</span>
+                    <span className="ml-1 text-gray-500">({hotel.reviewCount} reviews)</span>
+                  </div>
+                  <div className="mr-4">
+                    <svg className="w-4 h-4 text-gray-400 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>{hotel.address}, {hotel.city}, {hotel.country}</span>
+                  </div>
+                </div>
               </div>
-              <div className="mr-4">
-                <svg className="w-4 h-4 text-gray-400 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>{hotel.address}, {hotel.city}, {hotel.country}</span>
-              </div>
+              
+              {/* Add action buttons for logged-in users */}
+              {user && (
+                <div className="flex flex-wrap gap-2 md:justify-end">
+                  <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        {t('hotel.sendMessage')}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{t('hotel.contactHotel')}</DialogTitle>
+                        <DialogDescription>
+                          {t('hotel.sendMessageDesc', { hotelName: hotel.name })}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <Textarea
+                        placeholder={t('messages.enterMessage')}
+                        value={messageContent}
+                        onChange={(e) => setMessageContent(e.target.value)}
+                        className="min-h-[150px]"
+                      />
+                      <DialogFooter>
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!messageContent.trim() || sendingMessage}
+                        >
+                          {sendingMessage ? t('common.sending') : t('messages.send')}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <Star className="h-4 w-4 mr-2" />
+                        {t('reviews.writeReview')}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{t('reviews.writeReview')}</DialogTitle>
+                        <DialogDescription>
+                          {t('reviews.shareExperience')}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{t('reviews.rating')}</label>
+                          <div className="flex items-center space-x-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-6 w-6 cursor-pointer ${
+                                  star <= reviewRating
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                                onClick={() => setReviewRating(star)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{t('reviews.comment')}</label>
+                          <Textarea
+                            placeholder={t('reviews.commentPlaceholder')}
+                            value={reviewContent}
+                            onChange={(e) => setReviewContent(e.target.value)}
+                            className="min-h-[150px]"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          onClick={handleSubmitReview}
+                          disabled={!reviewContent.trim() || submittingReview}
+                        >
+                          {submittingReview ? t('common.submitting') : t('common.submit')}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
             </div>
             
             {/* Hotel Gallery */}
