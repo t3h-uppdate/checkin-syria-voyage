@@ -26,6 +26,12 @@ const badgeVariants = cva(
           "border-transparent bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-300",
         country:
           "border-transparent bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+        nationality:
+          "border-transparent bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+        phone:
+          "border-transparent bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+        address:
+          "border-transparent bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300",
       },
     },
     defaultVariants: {

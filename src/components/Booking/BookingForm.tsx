@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
-import { supabase } from '@/integrations/supabase/client'; // Import supabase
-import { useToast } from '@/components/ui/use-toast'; // Import useToast for error messages
+import { useAuth } from '@/contexts/AuthContext'; 
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +23,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from '@/components/ui/select';
 
 interface BookingFormProps {
   hotel: Hotel;
@@ -31,11 +38,39 @@ interface BookingFormProps {
   checkOut: Date;
 }
 
+// List of country codes for the nationality dropdown
+const COUNTRY_CODES = [
+  { code: 'us', name: 'United States' },
+  { code: 'uk', name: 'United Kingdom' },
+  { code: 'ca', name: 'Canada' },
+  { code: 'au', name: 'Australia' },
+  { code: 'fr', name: 'France' },
+  { code: 'de', name: 'Germany' },
+  { code: 'it', name: 'Italy' },
+  { code: 'es', name: 'Spain' },
+  { code: 'jp', name: 'Japan' },
+  { code: 'cn', name: 'China' },
+  { code: 'br', name: 'Brazil' },
+  { code: 'mx', name: 'Mexico' },
+  { code: 'in', name: 'India' },
+  { code: 'ru', name: 'Russia' },
+  { code: 'za', name: 'South Africa' },
+  { code: 'sg', name: 'Singapore' },
+  { code: 'ae', name: 'United Arab Emirates' },
+  { code: 'sa', name: 'Saudi Arabia' },
+  { code: 'tr', name: 'Turkey' },
+  { code: 'sy', name: 'Syria' },
+  { code: 'lb', name: 'Lebanon' },
+  { code: 'jo', name: 'Jordan' },
+  { code: 'iq', name: 'Iraq' },
+];
+
 const formSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(5, 'Phone number is required'),
+  nationality: z.string().min(2, 'Nationality is required'),
   specialRequests: z.string().optional(),
   agreeToTerms: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and conditions',
@@ -47,17 +82,38 @@ type FormValues = z.infer<typeof formSchema>;
 const BookingForm = ({ hotel, room, checkIn, checkOut }: BookingFormProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Get user from context
-  const { toast } = useToast(); // Initialize toast
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Fetch user profile data when component mounts
+  useState(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (!error && data) {
+          setUserProfile(data);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
+      firstName: userProfile?.first_name || '',
+      lastName: userProfile?.last_name || '',
+      email: userProfile?.email || '',
+      phone: userProfile?.phone_number || '',
+      nationality: userProfile?.nationality || '',
       specialRequests: '',
       agreeToTerms: false,
     },
@@ -84,7 +140,7 @@ const BookingForm = ({ hotel, room, checkIn, checkOut }: BookingFormProps) => {
         variant: "destructive",
       });
       setIsSubmitting(false);
-      return; // Stop submission if user is not logged in
+      return;
     }
 
     const bookingData = {
@@ -93,21 +149,35 @@ const BookingForm = ({ hotel, room, checkIn, checkOut }: BookingFormProps) => {
       room_id: room.id,
       check_in_date: checkIn.toISOString(),
       check_out_date: checkOut.toISOString(),
-      guest_count: room.capacity, // Using room capacity as guest count
+      guest_count: room.capacity,
       total_price: total,
-      status: 'pending', // Initial status
-      special_requests: data.specialRequests || null, // Use null if empty
+      status: 'pending',
+      special_requests: data.specialRequests || null,
     };
 
     try {
+      // First, update the user profile with the nationality and phone number
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({
+            phone_number: data.phone,
+            nationality: data.nationality,
+            first_name: data.firstName,
+            last_name: data.lastName
+          })
+          .eq('id', user.id);
+      }
+
+      // Create the booking
       const { data: newBooking, error } = await supabase
         .from('bookings')
         .insert([bookingData])
-        .select() // Select the newly inserted row
-        .single(); // Expecting a single row back
+        .select()
+        .single();
 
       if (error) {
-        throw error; // Throw error to be caught below
+        throw error;
       }
 
       if (!newBooking) {
@@ -117,18 +187,19 @@ const BookingForm = ({ hotel, room, checkIn, checkOut }: BookingFormProps) => {
       // Navigate to confirmation page with the actual booking ID
       navigate(`/confirmation/${newBooking.id}`, {
         state: {
-          booking: { // Pass necessary details to confirmation page
+          booking: {
             id: newBooking.id,
-            hotelName: hotel.name, // Use hotel name from prop
-            roomName: room.name,   // Use room name from prop
-            checkIn: new Date(newBooking.check_in_date), // Use actual check-in from DB
-            checkOut: new Date(newBooking.check_out_date), // Use actual check-out from DB
-            nights: nights, // Use calculated nights
-            guestName: `${data.firstName} ${data.lastName}`, // Use name from form
-            email: data.email, // Use email from form
-            phone: data.phone, // Use phone from form
-            specialRequests: newBooking.special_requests, // Use requests from DB
-            total: newBooking.total_price, // Use total from DB
+            hotelName: hotel.name,
+            roomName: room.name,
+            checkIn: new Date(newBooking.check_in_date),
+            checkOut: new Date(newBooking.check_out_date),
+            nights: nights,
+            guestName: `${data.firstName} ${data.lastName}`,
+            email: data.email,
+            phone: data.phone,
+            nationality: data.nationality,
+            specialRequests: newBooking.special_requests,
+            total: newBooking.total_price,
           }
         }
       });
@@ -217,6 +288,35 @@ const BookingForm = ({ hotel, room, checkIn, checkOut }: BookingFormProps) => {
                     )}
                   />
                 </div>
+                
+                {/* New Nationality field */}
+                <FormField
+                  control={form.control}
+                  name="nationality"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('booking.nationality')}</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your nationality" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COUNTRY_CODES.map((country) => (
+                            <SelectItem key={country.code} value={country.code}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <FormField
                   control={form.control}

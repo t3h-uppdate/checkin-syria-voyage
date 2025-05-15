@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Mail, Phone, User, MapPin, Flag, Home } from 'lucide-react';
+import { Loader2, Mail, Phone, User, MapPin, Flag, Home, BadgeCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,16 +86,29 @@ const GuestProfilePage = () => {
       us: 'United States',
       uk: 'United Kingdom',
       ca: 'Canada',
+      au: 'Australia',
+      fr: 'France',
+      de: 'Germany',
+      it: 'Italy',
+      es: 'Spain',
+      jp: 'Japan',
+      cn: 'China',
+      br: 'Brazil',
+      mx: 'Mexico',
+      in: 'India',
+      ru: 'Russia',
+      za: 'South Africa',
+      sg: 'Singapore',
+      ae: 'United Arab Emirates',
+      sa: 'Saudi Arabia',
+      tr: 'Turkey',
       sy: 'Syria',
       lb: 'Lebanon',
       jo: 'Jordan',
-      tr: 'Turkey',
       iq: 'Iraq',
-      sa: 'Saudi Arabia',
-      ae: 'United Arab Emirates'
     };
     
-    return countries[code] || code;
+    return countries[code.toLowerCase()] || code;
   };
 
   if (loading) {
@@ -127,7 +140,6 @@ const GuestProfilePage = () => {
   }
 
   if (!profile) {
-     // This case should ideally be covered by the error state now
     return (
        <MainLayout>
          <div className="pt-24 pb-12 container mx-auto px-4">
@@ -157,10 +169,15 @@ const GuestProfilePage = () => {
               <CardTitle className="text-2xl">
                 {profile.display_name || `${profile.first_name} ${profile.last_name}`}
               </CardTitle>
-              <div className="flex items-center justify-center mt-2">
+              <div className="flex items-center justify-center mt-2 gap-2">
                 <Badge variant="role" className="capitalize">
                   {profile.role}
                 </Badge>
+                {profile.nationality && (
+                  <Badge variant="nationality" className="capitalize">
+                    {profile.nationality.toUpperCase()}
+                  </Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -191,6 +208,16 @@ const GuestProfilePage = () => {
                     <div>{profile.first_name} {profile.last_name}</div>
                   </div>
                 </div>
+                
+                {profile.display_name && (
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-md">
+                    <BadgeCheck className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium">Display Name</div>
+                      <div>{profile.display_name}</div>
+                    </div>
+                  </div>
+                )}
                 
                 {profile.nationality && (
                   <div className="flex items-center gap-3 p-3 bg-muted rounded-md">

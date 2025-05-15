@@ -1,11 +1,32 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselNext, 
+  CarouselPrevious 
+} from '@/components/ui/carousel';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Room } from '@/types';
 
 interface RoomCardProps {
@@ -15,9 +36,14 @@ interface RoomCardProps {
   checkOut?: Date;
 }
 
-const RoomCard = ({ room, hotelId, checkIn, checkOut }: RoomCardProps) => {
+const RoomCard = ({ room, hotelId, checkIn: initialCheckIn, checkOut: initialCheckOut }: RoomCardProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [checkIn, setCheckIn] = useState<Date | undefined>(initialCheckIn);
+  const [checkOut, setCheckOut] = useState<Date | undefined>(initialCheckOut);
+  const [guests, setGuests] = useState<string>(room.capacity.toString());
 
   const calculateStayDuration = () => {
     if (!checkIn || !checkOut) return 1;
@@ -28,6 +54,21 @@ const RoomCard = ({ room, hotelId, checkIn, checkOut }: RoomCardProps) => {
   };
 
   const totalPrice = room.price * calculateStayDuration();
+
+  const handleBookNow = () => {
+    if (checkIn && checkOut) {
+      navigate(`/booking/${hotelId}/${room.id}?checkIn=${checkIn.toISOString()}&checkOut=${checkOut.toISOString()}`);
+    } else {
+      setShowBookingModal(true);
+    }
+  };
+  
+  const handleProceedToBooking = () => {
+    if (checkIn && checkOut) {
+      navigate(`/booking/${hotelId}/${room.id}?checkIn=${checkIn.toISOString()}&checkOut=${checkOut.toISOString()}`);
+      setShowBookingModal(false);
+    }
+  };
   
   return (
     <>
@@ -103,16 +144,9 @@ const RoomCard = ({ room, hotelId, checkIn, checkOut }: RoomCardProps) => {
                 {t('hotel.viewRoom')}
               </Button>
               
-              <Link 
-                to={checkIn && checkOut 
-                  ? `/booking/${hotelId}/${room.id}?checkIn=${checkIn.toISOString()}&checkOut=${checkOut.toISOString()}` 
-                  : `/hotels/${hotelId}?showBooking=true`
-                }
-              >
-                <Button className="w-full sm:w-auto">
-                  {checkIn && checkOut ? t('room.bookNow') : t('room.selectDates')}
-                </Button>
-              </Link>
+              <Button onClick={handleBookNow} className="w-full sm:w-auto">
+                {t('room.bookNow')}
+              </Button>
             </div>
           </div>
         </div>
@@ -188,17 +222,123 @@ const RoomCard = ({ room, hotelId, checkIn, checkOut }: RoomCardProps) => {
                   )}
                 </div>
                 
-                <Link 
-                  to={checkIn && checkOut 
-                    ? `/booking/${hotelId}/${room.id}?checkIn=${checkIn.toISOString()}&checkOut=${checkOut.toISOString()}` 
-                    : `/hotels/${hotelId}?showBooking=true`
-                  }
-                >
-                  <Button>
-                    {checkIn && checkOut ? t('room.bookNow') : t('room.selectDates')}
-                  </Button>
-                </Link>
+                <Button onClick={handleBookNow}>
+                  {t('room.bookNow')}
+                </Button>
               </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Booking Modal for Check-in/Check-out Selection */}
+      <Dialog open={showBookingModal} onOpenChange={setShowBookingModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Book {room.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('search.checkIn')} - {t('search.checkOut')}
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      {checkIn ? (
+                        format(checkIn, 'PP')
+                      ) : (
+                        <span className="text-muted-foreground">Check in</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={checkIn}
+                      onSelect={setCheckIn}
+                      initialFocus
+                      disabled={(date) => date < new Date()}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      {checkOut ? (
+                        format(checkOut, 'PP')
+                      ) : (
+                        <span className="text-muted-foreground">Check out</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={checkOut}
+                      onSelect={setCheckOut}
+                      initialFocus
+                      disabled={(date) => date < (checkIn || new Date())}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('search.guests')}
+              </label>
+              <Select value={guests} onValueChange={setGuests}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({length: room.capacity}, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} {num === 1 ? 'Guest' : 'Guests'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {checkIn && checkOut && (
+              <div className="pt-4 border-t">
+                <div className="flex justify-between text-sm mb-2">
+                  <span>{room.price} x {calculateStayDuration()} nights</span>
+                  <span>${totalPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>${totalPrice.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowBookingModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleProceedToBooking}
+                disabled={!checkIn || !checkOut}
+              >
+                Continue to Booking
+              </Button>
             </div>
           </div>
         </DialogContent>
