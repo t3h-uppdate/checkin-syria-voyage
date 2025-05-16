@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -10,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, CalendarRange } from 'lucide-react';
 import { toast } from 'sonner';
+import { BookingStatusBadge } from '../Dashboard/Bookings/BookingStatusBadge';
 
 const UserBookings = () => {
   const { t } = useTranslation();
@@ -135,13 +135,7 @@ const UserBookings = () => {
                         <strong>{t('booking.total')}:</strong> ${booking.total_price}
                       </p>
                       <div className="mt-2">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          booking.booking_status === 'confirmed' ? 'bg-green-100 text-green-800' : 
-                          booking.booking_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {booking.booking_status.toUpperCase()}
-                        </span>
+                        <BookingStatusBadge status={booking.booking_status} />
                       </div>
                     </div>
                   </CardContent>
@@ -195,6 +189,9 @@ const UserBookings = () => {
                       <p>
                         <strong>{t('booking.total')}:</strong> ${booking.total_price}
                       </p>
+                      <div className="mt-2">
+                        <BookingStatusBadge status={booking.booking_status} />
+                      </div>
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between">

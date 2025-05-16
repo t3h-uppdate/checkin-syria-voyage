@@ -30,10 +30,10 @@ export const BookingTableRow = ({
       <TableCell>
         <GuestInfo 
           userId={booking.user_id}
-          firstName={booking.guest_first_name}
-          lastName={booking.guest_last_name}
-          phone={booking.guest_phone}
-          nationality={booking.guest_nationality}
+          firstName={booking.first_name}
+          lastName={booking.last_name}
+          phone={booking.phone_number}
+          nationality={booking.nationality}
         />
       </TableCell>
       <TableCell>

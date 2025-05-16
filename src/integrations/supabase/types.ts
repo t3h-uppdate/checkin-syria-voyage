@@ -357,12 +357,14 @@ export type Database = {
           booking_status: string | null
           check_in_date: string | null
           check_out_date: string | null
+          first_name: string | null
           guest_count: number | null
-          guest_first_name: string | null
-          guest_last_name: string | null
           hotel_id: string | null
           hotel_name: string | null
+          last_name: string | null
+          nationality: string | null
           owner_id: string | null
+          phone_number: string | null
           room_id: string | null
           room_name: string | null
           special_requests: string | null

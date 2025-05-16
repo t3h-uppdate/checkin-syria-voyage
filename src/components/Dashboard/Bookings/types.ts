@@ -9,13 +9,20 @@ export type BookingDetails = {
   special_requests: string | null;
   booking_created_at: string;
   user_id: string;
-  guest_first_name: string | null;
-  guest_last_name: string | null;
-  guest_phone: string | null;
-  guest_nationality: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone_number: string | null;
+  nationality: string | null;
   hotel_id: string;
   hotel_name: string | null;
   owner_id: string;
   room_id: string;
   room_name: string | null;
+};
+
+// Helper type for BookingTable filtering
+export type BookingFilter = {
+  status?: string;
+  dateRange?: [Date | null, Date | null];
+  searchTerm?: string;
 };

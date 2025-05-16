@@ -29,53 +29,15 @@ const BookingRequestsList = () => {
     setError(null);
 
     try {
-      // Query to get bookings along with user profile information
-      const { data: bookingsWithProfiles, error: bookingsError } = await supabase
-        .from('bookings')
-        .select(`
-          id,
-          user_id,
-          hotel_id,
-          room_id,
-          check_in_date,
-          check_out_date,
-          guest_count,
-          total_price,
-          status,
-          special_requests,
-          created_at,
-          hotels!inner(id, name, owner_id),
-          rooms!inner(id, name),
-          profiles!inner(id, first_name, last_name, phone_number, nationality)
-        `)
-        .eq('hotels.owner_id', user.id)
-        .order('created_at', { ascending: false });
+      // Query the booking_details_view
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('booking_details_view')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('booking_created_at', { ascending: false });
 
       if (bookingsError) throw bookingsError;
-
-      // Map the response to match our BookingDetails type
-      const mappedBookings: BookingDetails[] = (bookingsWithProfiles || []).map((item: any) => ({
-        booking_id: item.id,
-        check_in_date: item.check_in_date,
-        check_out_date: item.check_out_date,
-        guest_count: item.guest_count,
-        total_price: item.total_price,
-        booking_status: item.status,
-        special_requests: item.special_requests,
-        booking_created_at: item.created_at,
-        user_id: item.user_id,
-        guest_first_name: item.profiles?.first_name,
-        guest_last_name: item.profiles?.last_name,
-        guest_phone: item.profiles?.phone_number,
-        guest_nationality: item.profiles?.nationality,
-        hotel_id: item.hotel_id,
-        hotel_name: item.hotels?.name,
-        owner_id: item.hotels?.owner_id,
-        room_id: item.room_id,
-        room_name: item.rooms?.name,
-      }));
-
-      setBookings(mappedBookings);
+      setBookings(bookingsData || []);
     } catch (err: any) {
       console.error("Error fetching booking details:", err);
       setError(err.message || "Failed to fetch booking requests.");
