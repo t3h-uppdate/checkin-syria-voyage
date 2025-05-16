@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -7,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, CalendarRange } from 'lucide-react';
+import { Loader2, CalendarRange, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { BookingStatusBadge } from '../Dashboard/Bookings/BookingStatusBadge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 const UserBookings = () => {
   const { t } = useTranslation();
@@ -18,6 +21,10 @@ const UserBookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedHotelId, setSelectedHotelId] = useState<string>('');
+  const [rating, setRating] = useState<number>(5);
+  const [comment, setComment] = useState<string>('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -49,6 +56,42 @@ const UserBookings = () => {
     
     fetchBookings();
   }, [user, t]);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user || !selectedHotelId) {
+      toast.error('Unable to submit review');
+      return;
+    }
+    
+    try {
+      setIsSubmittingReview(true);
+      
+      const { error } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: user.id,
+          hotel_id: selectedHotelId,
+          rating,
+          comment,
+          date: new Date().toISOString()
+        });
+        
+      if (error) throw error;
+      
+      toast.success('Review submitted successfully!');
+      setComment('');
+      setRating(5);
+      setSelectedHotelId('');
+      
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      toast.error('Failed to submit review');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const currentDate = new Date();
   const upcomingBookings = bookings.filter(booking => new Date(booking.check_in_date) >= currentDate);
@@ -115,9 +158,9 @@ const UserBookings = () => {
               {upcomingBookings.map(booking => (
                 <Card key={booking.booking_id}>
                   <CardHeader>
-                    <CardTitle>{booking.hotel_name}</CardTitle>
+                    <CardTitle>{booking.hotel_name || booking.hotel_id}</CardTitle>
                     <CardDescription>
-                      {booking.room_name}
+                      {booking.room_name || booking.room_id}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -170,9 +213,9 @@ const UserBookings = () => {
               {pastBookings.map(booking => (
                 <Card key={booking.booking_id}>
                   <CardHeader>
-                    <CardTitle>{booking.hotel_name}</CardTitle>
+                    <CardTitle>{booking.hotel_name || booking.hotel_id}</CardTitle>
                     <CardDescription>
-                      {booking.room_name}
+                      {booking.room_name || booking.room_id}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -201,12 +244,67 @@ const UserBookings = () => {
                     >
                       {t('booking.viewBookingDetails')}
                     </Button>
-                    <Button 
-                      onClick={() => navigate(`/review/${booking.hotel_id}`)}
-                      variant="default"
-                    >
-                      {t('reviews.writeReview')}
-                    </Button>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          onClick={() => setSelectedHotelId(booking.hotel_id)}
+                          variant="default"
+                        >
+                          <Star className="mr-2 h-4 w-4" />
+                          {t('reviews.writeReview')}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{t('reviews.writeReview')}</DialogTitle>
+                          <DialogDescription>
+                            Share your experience at {booking.hotel_name}
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <form onSubmit={handleSubmitReview} className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <label>{t('reviews.rating')}</label>
+                            <div className="flex items-center space-x-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`h-6 w-6 cursor-pointer ${
+                                    star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                  }`}
+                                  onClick={() => setRating(star)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <label>{t('reviews.comment')}</label>
+                            <Textarea
+                              value={comment}
+                              onChange={e => setComment(e.target.value)}
+                              placeholder="Tell us about your stay..."
+                              required
+                              rows={4}
+                            />
+                          </div>
+                          
+                          <DialogFooter>
+                            <Button type="submit" disabled={isSubmittingReview}>
+                              {isSubmittingReview ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  {t('reviews.submitting')}
+                                </>
+                              ) : (
+                                t('reviews.submitReview')
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </CardFooter>
                 </Card>
               ))}

@@ -1,24 +1,94 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
+import { BookingDetails } from '@/components/Dashboard/Bookings/types';
 
 const BookingConfirmationPage = () => {
   const { t } = useTranslation();
   const { bookingId } = useParams<{ bookingId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const booking = location.state?.booking;
+  const [booking, setBooking] = useState<any>(location.state?.booking || null);
+  const [loading, setLoading] = useState(!location.state?.booking);
+  
+  // Fetch booking details if not provided in location state
+  useEffect(() => {
+    const fetchBookingDetails = async () => {
+      if (!bookingId || booking) return;
+      
+      try {
+        setLoading(true);
+        
+        const { data: bookingData, error } = await supabase
+          .from('booking_details_view')
+          .select('*')
+          .eq('booking_id', bookingId)
+          .single();
+          
+        if (error) throw error;
+        
+        if (bookingData) {
+          // Format booking data to match expected structure
+          setBooking({
+            id: bookingData.booking_id,
+            hotelName: bookingData.hotel_name || 'Unknown Hotel',
+            roomName: bookingData.room_name || 'Standard Room',
+            checkIn: new Date(bookingData.check_in_date),
+            checkOut: new Date(bookingData.check_out_date),
+            nights: calculateNights(
+              new Date(bookingData.check_in_date),
+              new Date(bookingData.check_out_date)
+            ),
+            guestName: `${bookingData.first_name || ''} ${bookingData.last_name || ''}`.trim() || 'Guest',
+            email: '',  // Email not included in view
+            phone: bookingData.phone_number || 'Not provided',
+            nationality: bookingData.nationality || 'Not specified',
+            specialRequests: bookingData.special_requests || '',
+            total: bookingData.total_price || 0,
+          });
+        }
+        
+      } catch (err) {
+        console.error('Error fetching booking details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBookingDetails();
+  }, [bookingId, booking]);
+  
+  // Helper function to calculate nights
+  const calculateNights = (checkIn: Date, checkOut: Date) => {
+    const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="pt-24 pb-12">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   if (!booking) {
     return (
@@ -31,7 +101,7 @@ const BookingConfirmationPage = () => {
                 We couldn't find the details for this booking. Please check your bookings in your account.
               </p>
               <div className="flex justify-center space-x-4">
-                <Button onClick={() => navigate('/profile/bookings')}>
+                <Button onClick={() => navigate('/bookings')}>
                   View My Bookings
                 </Button>
                 <Button variant="outline" onClick={() => navigate('/')}>
