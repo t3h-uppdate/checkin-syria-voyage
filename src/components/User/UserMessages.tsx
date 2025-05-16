@@ -16,9 +16,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, MessageSquare, Send, Search, Clock, User, ChevronDown, Filter } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
-import { format } from 'date-fns';
+import { Loader2, MessageSquare, Send, Search, Clock, User, ChevronDown, Filter, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface Message {
   id: string;
@@ -40,6 +40,11 @@ interface Hotel {
   owner_id: string;
 }
 
+interface TypingStatus {
+  isTyping: boolean;
+  hotelId: string | null;
+}
+
 const UserMessages = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -54,6 +59,12 @@ const UserMessages = () => {
   const [newMessage, setNewMessage] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [typingStatus, setTypingStatus] = useState<TypingStatus>({
+    isTyping: false,
+    hotelId: null
+  });
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [lastSeen, setLastSeen] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // Dialog state for new messages
@@ -177,6 +188,24 @@ const UserMessages = () => {
         const allMessages = [...receivedMessagesWithMetadata, ...sentMessagesWithMetadata];
         setMessages(allMessages);
         
+        // Fetch last seen timestamps
+        if (hotelsData) {
+          const lastSeenMap: Record<string, string> = {};
+          for (const hotel of hotelsData) {
+            const { data: lastSeenData } = await supabase
+              .from('message_status')
+              .select('last_seen')
+              .eq('hotel_id', hotel.id)
+              .eq('user_id', user.id)
+              .maybeSingle();
+              
+            if (lastSeenData) {
+              lastSeenMap[hotel.id] = lastSeenData.last_seen;
+            }
+          }
+          setLastSeen(lastSeenMap);
+        }
+        
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError('Failed to load messages');
@@ -239,11 +268,47 @@ const UserMessages = () => {
       };
     };
     
+    // Set up typing indicators subscription
+    const setupTypingSubscription = () => {
+      if (!user) return null;
+      
+      const channel = supabase
+        .channel('typing-status')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'typing_status' },
+          (payload) => {
+            const typingInfo = payload.new as any;
+            if (typingInfo.receiver_id === user.id) {
+              setTypingStatus({
+                isTyping: true,
+                hotelId: typingInfo.hotel_id
+              });
+              
+              // Auto-reset typing status after 3 seconds
+              setTimeout(() => {
+                setTypingStatus({
+                  isTyping: false,
+                  hotelId: null
+                });
+              }, 3000);
+            }
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+    
     fetchMessagesAndHotels();
-    const unsubscribe = setupMessageSubscription();
+    const unsubscribeMessage = setupMessageSubscription();
+    const unsubscribeTyping = setupTypingSubscription();
     
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubscribeMessage) unsubscribeMessage();
+      if (unsubscribeTyping) unsubscribeTyping();
     };
   }, [user, t]);
 
@@ -261,7 +326,7 @@ const UserMessages = () => {
     }
     
     if (!subject.trim() || !content.trim()) {
-      toast.warning(t('common.error'));
+      toast.warning(t('common.formError'));
       return;
     }
     
@@ -276,7 +341,7 @@ const UserMessages = () => {
       }
       
       // Create a new message
-      const { error: messageError } = await supabase
+      const { data: newMsg, error: messageError } = await supabase
         .from('messages')
         .insert({
           sender_id: user.id,
@@ -285,7 +350,9 @@ const UserMessages = () => {
           subject,
           content,
           is_read: false
-        });
+        })
+        .select()
+        .single();
         
       if (messageError) throw messageError;
       
@@ -295,53 +362,26 @@ const UserMessages = () => {
       setSelectedHotelId('');
       setIsDialogOpen(false);
       
-      // Refresh messages list
-      const { data: newMessage, error: newMessageError } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('sender_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
+      // Get receiver name
+      let receiverName = 'Hotel Owner';
+      const { data: receiverData, error: receiverError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', hotel.owner_id)
         .single();
       
-      if (newMessageError) {
-        console.error('Error fetching new message:', newMessageError);
-        return;
+      if (!receiverError && receiverData) {
+        receiverName = `${receiverData.first_name || ''} ${receiverData.last_name || ''}`.trim() || 'Hotel Owner';
       }
       
-      if (newMessage) {
-        // Get receiver name
-        let receiverName = 'Hotel Owner';
-        const { data: receiverData, error: receiverError } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', newMessage.receiver_id)
-          .single();
-        
-        if (!receiverError && receiverData) {
-          receiverName = `${receiverData.first_name || ''} ${receiverData.last_name || ''}`.trim() || 'Hotel Owner';
-        }
-        
-        // Get hotel name
-        let hotelName = null;
-        if (newMessage.hotel_id) {
-          const { data: hotelData } = await supabase
-            .from('hotels')
-            .select('name')
-            .eq('id', newMessage.hotel_id)
-            .single();
-          
-          hotelName = hotelData?.name;
-        }
-        
-        const enrichedMessage = {
-          ...newMessage,
-          hotel_name: hotelName,
-          receiver_name: receiverName
-        };
-        
-        setMessages(prev => [...prev, enrichedMessage]);
-      }
+      const enrichedMessage = {
+        ...newMsg,
+        hotel_name: hotel.name,
+        receiver_name: receiverName
+      };
+      
+      setMessages(prev => [...prev, enrichedMessage]);
+      
     } catch (err) {
       console.error('Error sending message:', err);
       toast.error(t('messages.error'));
@@ -355,6 +395,8 @@ const UserMessages = () => {
     if (!user || !currentConversation || !newMessage.trim()) return;
     
     try {
+      setIsSending(true);
+      
       // Get the conversation details from current messages
       const conversationMessages = messages.filter(
         m => m.hotel_id === currentConversation
@@ -368,11 +410,20 @@ const UserMessages = () => {
       
       if (!hotel) {
         toast.error("Hotel not found");
+        setIsSending(false);
         return;
       }
       
+      // Send typing indicator first
+      await supabase.from('typing_status').insert({
+        sender_id: user.id,
+        receiver_id: hotel.owner_id,
+        hotel_id: hotelId,
+        is_typing: true
+      });
+      
       // Send the message
-      const { error } = await supabase
+      const { data: newMsg, error } = await supabase
         .from('messages')
         .insert({
           sender_id: user.id,
@@ -381,33 +432,45 @@ const UserMessages = () => {
           subject: `Re: ${conversationMessages[0].subject || 'Your Booking'}`,
           content: newMessage,
           is_read: false
-        });
+        })
+        .select()
+        .single();
         
       if (error) throw error;
       
       // Clear input field
       setNewMessage("");
       
-      // Add to local messages state
-      const newMessageObj: Message = {
-        id: Date.now().toString(),
-        sender_id: user.id,
-        receiver_id: hotel.owner_id,
-        hotel_id: hotelId,
-        subject: `Re: ${conversationMessages[0].subject || 'Your Booking'}`,
-        content: newMessage,
-        created_at: new Date().toISOString(),
-        is_read: true,
-        receiver_name: 'Hotel Owner',
-        hotel_name: hotel.name
-      };
+      // Update the message_status table for read receipts
+      await supabase
+        .from('message_status')
+        .upsert(
+          {
+            user_id: user.id,
+            hotel_id: hotelId,
+            last_sent: new Date().toISOString()
+          },
+          { onConflict: 'user_id,hotel_id' }
+        );
       
-      setMessages(prev => [...prev, newMessageObj]);
+      // Add to local messages state with receiver name
+      if (newMsg) {
+        const enrichedMessage = {
+          ...newMsg,
+          hotel_name: hotel.name,
+          receiver_name: 'Hotel Owner'
+        };
+        
+        setMessages(prev => [...prev, enrichedMessage]);
+      }
+      
       toast.success(t('messages.messageSent'));
       
     } catch (err) {
       console.error('Error sending reply:', err);
       toast.error(t('messages.error'));
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -433,6 +496,33 @@ const UserMessages = () => {
       );
     } catch (err) {
       console.error('Error marking message as read:', err);
+    }
+  };
+
+  // Update the last seen status when opening a conversation
+  const updateLastSeen = async (hotelId: string) => {
+    if (!user) return;
+    
+    try {
+      const now = new Date().toISOString();
+      
+      await supabase
+        .from('message_status')
+        .upsert(
+          {
+            user_id: user.id,
+            hotel_id: hotelId,
+            last_seen: now
+          },
+          { onConflict: 'user_id,hotel_id' }
+        );
+        
+      setLastSeen(prev => ({
+        ...prev,
+        [hotelId]: now
+      }));
+    } catch (err) {
+      console.error('Error updating last seen:', err);
     }
   };
 
@@ -479,6 +569,16 @@ const UserMessages = () => {
           )
       );
     });
+
+  // Calculate relative time for message timestamps
+  const getRelativeTime = (timestamp: string) => {
+    try {
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    } catch (err) {
+      console.error('Error formatting time:', err);
+      return 'Unknown';
+    }
+  };
 
   if (loading) {
     return (
@@ -624,6 +724,19 @@ const UserMessages = () => {
                 ) : (
                   <div>
                     {filteredConversations.map(conversation => {
+                      // Check if the last message was sent by user or hotel
+                      const isLastMessageFromUser = conversation.latestMessage.sender_id === user?.id;
+                      const lastMessageTimeStamp = new Date(conversation.timestamp).getTime();
+                      
+                      // Check if the message has been seen, based on last_seen status
+                      let isMessageSeen = false;
+                      const lastSeenTimestamp = lastSeen[conversation.hotelId];
+                      
+                      if (lastSeenTimestamp && isLastMessageFromUser) {
+                        const lastSeenTime = new Date(lastSeenTimestamp).getTime();
+                        isMessageSeen = lastSeenTime >= lastMessageTimeStamp;
+                      }
+                      
                       return (
                         <div 
                           key={conversation.hotelId}
@@ -633,6 +746,8 @@ const UserMessages = () => {
                             messages
                               .filter(m => m.hotel_id === conversation.hotelId && m.receiver_id === user.id && !m.is_read)
                               .forEach(m => markAsRead(m.id));
+                            // Update last seen
+                            updateLastSeen(conversation.hotelId);
                           }}
                           className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition ${
                             currentConversation === conversation.hotelId ? "bg-muted" : ""
@@ -650,17 +765,24 @@ const UserMessages = () => {
                             </div>
                             <div className="text-xs text-muted-foreground flex items-center">
                               <Clock className="h-3 w-3 mr-1" />
-                              {new Date(conversation.timestamp).toLocaleString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                              {getRelativeTime(conversation.timestamp)}
                             </div>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
                             {conversation.latestMessage.content}
                           </p>
+                          {isLastMessageFromUser && (
+                            <div className="flex items-center justify-end mt-1 text-xs text-muted-foreground">
+                              {isMessageSeen ? (
+                                <div className="flex items-center">
+                                  <Check className="h-3 w-3 mr-1 text-green-500" />
+                                  <span>Seen</span>
+                                </div>
+                              ) : (
+                                <span>Sent</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -716,9 +838,23 @@ const UserMessages = () => {
                               </div>
                             </div>
                             <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                            <div className="text-xs text-right mt-1 opacity-70">
+                              {getRelativeTime(message.created_at)}
+                            </div>
                           </div>
                         </div>
                       ))}
+                    {typingStatus.isTyping && typingStatus.hotelId === currentConversation && (
+                      <div className="flex justify-start">
+                        <div className="bg-muted rounded-lg p-2 max-w-[80%]">
+                          <div className="flex items-center space-x-1">
+                            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
+                            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div ref={messagesEndRef} />
                   </div>
                   
@@ -740,9 +876,13 @@ const UserMessages = () => {
                       <Button 
                         className="self-end"
                         onClick={sendReply}
-                        disabled={!newMessage.trim()}
+                        disabled={!newMessage.trim() || isSending}
                       >
-                        <Send className="h-4 w-4 mr-2" />
+                        {isSending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4 mr-2" />
+                        )}
                         Send
                       </Button>
                     </div>
@@ -792,6 +932,9 @@ const UserMessages = () => {
                       <div className="text-sm text-muted-foreground">
                         From: {message.sender_name} {message.hotel_name && `(${message.hotel_name})`}
                       </div>
+                      <div className="text-xs text-muted-foreground">
+                        {getRelativeTime(message.created_at)}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <p className="whitespace-pre-line">{message.content}</p>
@@ -821,6 +964,9 @@ const UserMessages = () => {
                       </div>
                       <div className="text-sm text-muted-foreground">
                         To: {message.receiver_name || 'Hotel Owner'} {message.hotel_name && `(${message.hotel_name})`}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {getRelativeTime(message.created_at)}
                       </div>
                     </CardHeader>
                     <CardContent>
