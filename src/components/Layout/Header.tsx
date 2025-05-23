@@ -150,12 +150,6 @@ const Header = () => {
                           <span>Admin Control Panel</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin-dashboard" className="flex items-center gap-2 w-full">
-                          <Shield className="h-4 w-4" />
-                          <span>User Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
                   )}
@@ -281,14 +275,6 @@ const Header = () => {
                       >
                         <Shield className="h-4 w-4" />
                         <span>Admin Control Panel</span>
-                      </Link>
-                      <Link 
-                        to="/admin-dashboard"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-gray-700 hover:text-primary flex items-center gap-2"
-                      >
-                        <Shield className="h-4 w-4" />
-                        <span>User Dashboard</span>
                       </Link>
                     </>
                   )}

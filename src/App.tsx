@@ -19,7 +19,7 @@ import BookingsPage from "./pages/BookingsPage";
 import MessagesPage from "./pages/MessagesPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import NotificationsPage from "./pages/NotificationsPage";
-import AdminControlPanelPage from "./pages/AdminControlPanelPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -53,7 +53,7 @@ const ProtectedOwnerRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (!user) {
+  if (!loading && !user) {
     return <Navigate to="/login" replace />;
   }
   
@@ -76,7 +76,7 @@ const ProtectedUserRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (!user) {
+  if (!loading && !user) {
     return <Navigate to="/login" replace />;
   }
   
@@ -166,9 +166,7 @@ const AppRoutes = () => (
         <DashboardSettingsPage />
       </ProtectedOwnerRoute>
     } />
-    
-    <Route path="/admin-dashboard" element={<AdminControlPanelPage />} />
-    <Route path="/admin-control-panel" element={<AdminControlPanelPage />} />
+    <Route path="/admin-control-panel" element={<AdminDashboardPage />} />
     <Route path="/guest/:userId" element={<GuestProfilePage />} />
     <Route path="/settings" element={<SettingsPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
