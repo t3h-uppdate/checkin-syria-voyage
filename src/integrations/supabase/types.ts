@@ -348,6 +348,57 @@ export type Database = {
           },
         ]
       }
+      typing_status: {
+        Row: {
+          sender_id: string
+          receiver_id: string
+          hotel_id: string | null
+          is_typing: boolean
+          updated_at: string
+        }
+        Insert: {
+          sender_id: string
+          receiver_id: string
+          hotel_id?: string | null
+          is_typing: boolean
+          updated_at?: string
+        }
+        Update: {
+          sender_id?: string
+          receiver_id?: string
+          hotel_id?: string | null
+          is_typing?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      message_status: {
+        Row: {
+          user_id: string
+          hotel_id: string
+          last_sent: string | null
+          last_seen: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          hotel_id: string
+          last_sent?: string | null
+          last_seen?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          hotel_id?: string
+          last_sent?: string | null
+          last_seen?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       booking_details_view: {

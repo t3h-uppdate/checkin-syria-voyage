@@ -349,7 +349,7 @@ const UserMessages = () => {
           hotel_id: selectedHotelId,
           subject,
           content,
-          is_read: false
+          is_read: true // Mark as read by sender
         })
         .select()
         .single();
@@ -376,7 +376,7 @@ const UserMessages = () => {
       
       const enrichedMessage = {
         ...newMsg,
-        hotel_name: hotel.name,
+        hotel_name: hotel.name, // Add hotel_name
         receiver_name: receiverName
       };
       
@@ -414,13 +414,35 @@ const UserMessages = () => {
         return;
       }
       
-      // Send typing indicator first
-      await supabase.from('typing_status').insert({
-        sender_id: user.id,
-        receiver_id: hotel.owner_id,
-        hotel_id: hotelId,
-        is_typing: true
-      });
+      // Send typing indicator
+      await supabase
+        .from('typing_status')
+        .upsert(
+          {
+            sender_id: user.id,
+            receiver_id: hotel.owner_id,
+            hotel_id: hotelId,
+            is_typing: true,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'sender_id,hotel_id' }
+        );
+
+      // Clear typing status after a delay
+      setTimeout(async () => {
+        await supabase
+          .from('typing_status')
+          .upsert(
+            {
+              sender_id: user.id,
+              receiver_id: hotel.owner_id,
+              hotel_id: hotelId,
+              is_typing: false,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'sender_id,hotel_id' }
+          );
+      }, 3000); // Clear after 3 seconds
       
       // Send the message
       const { data: newMsg, error } = await supabase
@@ -431,7 +453,7 @@ const UserMessages = () => {
           hotel_id: hotelId,
           subject: `Re: ${conversationMessages[0].subject || 'Your Booking'}`,
           content: newMessage,
-          is_read: false
+          is_read: true // Mark as read by sender
         })
         .select()
         .single();
